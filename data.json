@@ -1,0 +1,167 @@
+{
+    "node": 1,
+    "cluster": 7,
+    "mutations": 205,
+    "node_freq": [
+        0.3738,
+        0.0146,
+        0.0263,
+        0.0373
+    ],
+    "avg_obs_freq": [
+        0.9737,
+        0.9694,
+        0.9729,
+        0.9647
+    ],
+    "children": [
+        {
+            "node": 2,
+            "cluster": 5,
+            "mutations": 21,
+            "node_freq": [
+                0.0,
+                0.31,
+                0.0373,
+                0.0074
+            ],
+            "avg_obs_freq": [
+                0.0,
+                0.9547,
+                0.9466,
+                0.9274
+            ],
+            "children": [
+                {
+                    "node": 3,
+                    "cluster": 3,
+                    "mutations": 15,
+                    "node_freq": [
+                        0.0,
+                        0.0,
+                        0.4095,
+                        0.0
+                    ],
+                    "avg_obs_freq": [
+                        0.8821,
+                        0.0,
+                        0.9093,
+                        0.9032
+                    ],
+                    "children": [
+                        {
+                            "node": 4,
+                            "cluster": 2,
+                            "mutations": 17,
+                            "node_freq": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                0.4723
+                            ],
+                            "avg_obs_freq": [
+                                0.9125,
+                                0.9588,
+                                0.0,
+                                0.9348
+                            ],
+                            "children": [
+                                {
+                                    "node": 5,
+                                    "cluster": 8,
+                                    "mutations": 27,
+                                    "node_freq": [
+                                        0.0,
+                                        0.0,
+                                        0.0,
+                                        0.0
+                                    ],
+                                    "avg_obs_freq": [
+                                        0.4466,
+                                        0.4716,
+                                        0.4396,
+                                        0.4114
+                                    ],
+                                    "children": [
+                                        {
+                                            "node": 8,
+                                            "cluster": 4,
+                                            "mutations": 4,
+                                            "node_freq": [
+                                                0.0,
+                                                0.0,
+                                                0.0,
+                                                0.0
+                                            ],
+                                            "avg_obs_freq": [
+                                                0.2721,
+                                                0.0,
+                                                0.3425,
+                                                0.527
+                                            ],
+                                            "children": [
+                                                {
+                                                    "node": 9,
+                                                    "cluster": 6,
+                                                    "mutations": 3,
+                                                    "node_freq": [
+                                                        0.0,
+                                                        0.0,
+                                                        0.0,
+                                                        0.4477
+                                                    ],
+                                                    "avg_obs_freq": [
+                                                        0.0,
+                                                        0.4457,
+                                                        0.3822,
+                                                        0.668
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "node": 6,
+                                            "cluster": 0,
+                                            "mutations": 26,
+                                            "node_freq": [
+                                                0.0619,
+                                                0.0,
+                                                0.0,
+                                                0.0
+                                            ],
+                                            "avg_obs_freq": [
+                                                0.8762,
+                                                0.9196,
+                                                0.8643,
+                                                0.0
+                                            ],
+                                            "children": [
+                                                {
+                                                    "node": 7,
+                                                    "cluster": 1,
+                                                    "mutations": 20,
+                                                    "node_freq": [
+                                                        0.5379,
+                                                        0.6447,
+                                                        0.4998,
+                                                        0.0
+                                                    ],
+                                                    "avg_obs_freq": [
+                                                        0.5379,
+                                                        0.7374,
+                                                        0.532,
+                                                        0.0
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
