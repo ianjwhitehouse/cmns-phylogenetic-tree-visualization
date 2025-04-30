@@ -1,5 +1,6 @@
 var svg = d3.select('svg');
 var width = +svg.attr('width');
+var tree_width = width/2
 var height = +svg.attr('height');
 
 
@@ -12,7 +13,7 @@ d3.json('tree.json').then(function(dataset) {
     dataset.forEach(node => {
         filtered_list = dataset.filter(x => x["level"] === node["level"]);
         level_size = filtered_list.length + 1;
-        node["x"] = (filtered_list.indexOf(node) + 1) * (width/level_size);
+        node["x"] = (filtered_list.indexOf(node) + 1) * (tree_width/level_size);
     });
     console.log(dataset);
 
@@ -27,10 +28,10 @@ d3.json('tree.json').then(function(dataset) {
 
 
     var linkG = svg.append('g')
-        .attr('class', 'links-group').attr('transform', 'translate(-350, 0)');
+        .attr('class', 'links-group');
 
     var nodeG = svg.append('g')
-        .attr('class', 'nodes-group').attr('transform', 'translate(-350, 0)');
+        .attr('class', 'nodes-group');
 
     // Add g's for each leaf
     var nodeEnter = nodeG.selectAll('.node')
@@ -40,11 +41,15 @@ d3.json('tree.json').then(function(dataset) {
         .attr('transform', function (d) {
             return 'translate(' + d.x + ',' + (height/max_level) * d.level + ')';
         }).on("click", function (d) {
-            this.parentNode.appendChild(this);
-            rect = d3.select(this).select('rect');
+            var clicked_node = this
+            clicked_node.parentNode.appendChild(clicked_node);
+            rect = d3.select(clicked_node).select('rect');
 
             if (rect.attr("width") < 225) {
                 nodeG.selectAll('.node').each(function(d) {
+                    if (this === clicked_node) {
+                        return;
+                    }
                     make_small(d3.select(this), max_level);
                 });
                 make_big(d3.select(this), max_level);
@@ -76,10 +81,10 @@ d3.json('tree.json').then(function(dataset) {
 
     // Setup gs to hold pre and post expanded visualizations
     var pre_expand = nodeEnter.append('g').attr("class", "g-pre-expand")
-    var post_expand = nodeEnter.append('g').attr("class", "g-post-expand").attr("opacity", 0.0).attr('transform', 'translate(0, 25)')
+    var post_expand = nodeEnter.append('g').attr("class", "g-post-expand").attr("opacity", 0.0).attr('transform', 'translate(0, 35)')
 
     // Add bar chart of probs to pre expand visualization
-    var prob_bars = pre_expand.append('g').attr('transform', 'translate(-60, 35)').attr('fill', '#bbbbbb').attr('stroke', 'black');
+    var prob_bars = pre_expand.append('g').attr('class', 'sub-chart').attr('transform', 'translate(-60, 35)').attr('fill', '#bbbbbb').attr('stroke', 'black');
     prob_bars.append('rect').attr('class', 'bar').attr("x", 0).attr("width", 30).attr('height', d => 35 * d.avg_obs_freq[0]).attr('y', d => -35 * d.avg_obs_freq[0])
     prob_bars.append('rect').attr('class', 'bar').attr("x", 30).attr("width", 30).attr('height', d => 35 * d.avg_obs_freq[1]).attr('y', d => -35 * d.avg_obs_freq[1])
     prob_bars.append('rect').attr('class', 'bar').attr("x", 60).attr("width", 30).attr('height', d => 35 * d.avg_obs_freq[2]).attr('y', d => -35 * d.avg_obs_freq[2])
@@ -154,6 +159,8 @@ function make_big(node, max_level) {
     rect = node.select('rect');
     title = node.select('text');
 
+    console.log(node.select('.g-pre-expand'))
+    console.log(node.select('.g-post-expand'))
     node.select('.g-pre-expand').attr("opacity", 0.0);
     node.select('.g-post-expand').transition().attr("opacity", 1.0);
 
@@ -161,8 +168,8 @@ function make_big(node, max_level) {
     if (d.x + x <= 0) {
         x = 5 - d.x
     }
-    else if (d.x + x + 450 >= width) {
-        x = width - 5 - 450 - d.x
+    else if (d.x + x + 450 >= tree_width) {
+        x = tree_width - 5 - 450 - d.x
     }
 
     y = -105
