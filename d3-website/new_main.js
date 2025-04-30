@@ -32,6 +32,7 @@ d3.json('tree.json').then(function(dataset) {
     var nodeG = svg.append('g')
         .attr('class', 'nodes-group');
 
+    // Add g's for each leaf
     var nodeEnter = nodeG.selectAll('.node')
         .data(dataset)
         .enter()
@@ -39,11 +40,12 @@ d3.json('tree.json').then(function(dataset) {
         .attr('transform', function (d) {
             return 'translate(' + d.x + ',' + (height/max_level) * d.level + ')';
         }).on("click", function (d) {
+            d = this.__data__;
             this.parentNode.appendChild(this);
             const rect = d3.select(this).select('rect');
             const title = d3.select(this).select('text');
 
-            if (rect.attr("width") < 200) {
+            if (rect.attr("width") < 225) {
                 d3.select(this).select('.g-pre-expand').attr("opacity", 0.0);
                 d3.select(this).select('.g-post-expand').transition().attr("opacity", 1.0);
                 make_big(rect, title, d, max_level);
@@ -55,17 +57,19 @@ d3.json('tree.json').then(function(dataset) {
             }
         });
 
+    // Add rects for each g for each leaf
     nodeEnter.append('rect')
         .attr('class', 'node')
         .attr('y', function (d) {
             return -35;
         })
         .attr("x", function (d) {
-            return -90;
+            return -100;
         })
-        .attr("width", 180).attr("height", 70)
-        .attr("fill", "white")
+        .attr("width", 200).attr("height", 70)
+        .attr("fill", "white").attr("rx", 5)
 
+    // Add title text to each g
     nodeEnter.append('text').attr('font-size','16px') .attr('font-weight','bold').attr('text-anchor', 'middle')
         .attr("alignment-baseline", "text-before-edge").attr("dy", -35).attr('class', 'node-title').text(function (d) {
         return (
@@ -73,17 +77,53 @@ d3.json('tree.json').then(function(dataset) {
         );
     });
 
+    // Setup gs to hold pre and post expanded visualizations
     var pre_expand = nodeEnter.append('g').attr("class", "g-pre-expand")
-    var post_expand = nodeEnter.append('g').attr("class", "g-post-expand").attr("opacity", 0.0)
+    var post_expand = nodeEnter.append('g').attr("class", "g-post-expand").attr("opacity", 0.0).attr('transform', 'translate(0, 25)')
 
-    var prob_bars = pre_expand.append('g').attr('transform', 'translate(-60, 35)').attr('fill', 'blue').attr('stroke', 'black');
+    // Add bar chart of probs to pre expand visualization
+    var prob_bars = pre_expand.append('g').attr('transform', 'translate(-60, 35)').attr('fill', '#bbbbbb').attr('stroke', 'black');
     prob_bars.append('rect').attr('class', 'bar').attr("x", 0).attr("width", 30).attr('height', d => 35 * d.avg_obs_freq[0]).attr('y', d => -35 * d.avg_obs_freq[0])
     prob_bars.append('rect').attr('class', 'bar').attr("x", 30).attr("width", 30).attr('height', d => 35 * d.avg_obs_freq[1]).attr('y', d => -35 * d.avg_obs_freq[1])
     prob_bars.append('rect').attr('class', 'bar').attr("x", 60).attr("width", 30).attr('height', d => 35 * d.avg_obs_freq[2]).attr('y', d => -35 * d.avg_obs_freq[2])
     prob_bars.append('rect').attr('class', 'bar').attr("x", 90).attr("width", 30).attr('height', d => 35 * d.avg_obs_freq[3]).attr('y', d => -35 * d.avg_obs_freq[3])
     prob_bars.append('line').attr("x1", 0).attr("x2", 120).attr("y1", -35).attr("y2", -35).attr('stroke-width', 2).attr('stroke', 'red');
 
+    // Pie chart setup functions
+    pie = d3.pie().value(d => d.count).sort(null);
+    arc = d3.arc().innerRadius(0).outerRadius(65);
 
+    function colorForType(type) {
+        accents = ["#30a2da", "#fc7f0b", "#fc4f30", "#17becf", "#8cc63e", "#9467bd"];
+        accents = d3.scaleOrdinal(accents);
+        return type.startsWith("no known") ? "#bbbbbb" : accents(type);
+    }
+
+    // Add pie chart of roles to post-expand visualizations
+    var role_pie = post_expand.append('g').attr('class', 'sub-chart').attr('transform', 'translate(-150, 0)')
+    role_pie.append('text').attr('font-size','16px') .attr('font-weight','bold').attr('text-anchor', 'middle')
+        .attr("alignment-baseline", "text-after-edge").attr("dy", -70).attr('class', 'sub-chart-title').text("Roles")
+    role_pie.append('g').attr('class', 'pie').selectAll('path').data(d => pie(countTypes(d.roles)))
+        .enter().append('path').attr('d', arc).attr('class', 'pie-slice')
+        .attr('fill', p => colorForType(p.data.type));
+    role_pie.selectAll('path').append('title').text(p => p.data.type + ": " + p.data.count)
+
+    // Add pie chart of types to post-expand visualizations
+    var type_pie = post_expand.append('g').attr('class', 'sub-chart')
+    type_pie.append('text').attr('font-size','16px') .attr('font-weight','bold').attr('text-anchor', 'middle')
+        .attr("alignment-baseline", "text-after-edge").attr("dy", -70).attr('class', 'sub-chart-title').text("Types")
+    type_pie.append('g').attr('class', 'pie').selectAll('path').data(d => pie(countTypes(d.types)))
+        .enter().append('path').attr('d', arc).attr('class', 'pie-slice')
+        .attr('fill', p => colorForType(p.data.type));
+    type_pie.selectAll('path').append('title').text(p => p.data.type + ": " + p.data.count)
+
+    // Add Anna's balls visualization to post-expand visualizations
+    var type_pie = post_expand.append('g').attr('class', 'sub-chart').attr('transform', 'translate(150, 0)')
+    type_pie.append('text').attr('font-size','16px') .attr('font-weight','bold').attr('text-anchor', 'middle')
+        .attr("alignment-baseline", "text-after-edge").attr("dy", -70).attr('class', 'chart-title').text("Anna's Ball Viz")
+
+
+    // Add branches
     var linkEnter = linkG.selectAll('.link')
         .data(dataset.filter(x => x["level"] > 0))
         .enter()
@@ -114,19 +154,21 @@ d3.json('tree.json').then(function(dataset) {
 
 function make_big(rect, title, d, max_level) {
     x = -225
-    if (d.x + x < 0) {
-        x = 0 - d.x
+    if (d.x + x <= 0) {
+        x = 5 - d.x
     }
-    else if (d.x - x > width) {
-        x = d.x - width
+    else if (d.x + x + 450 >= width) {
+        x = width - 5 - 450 - d.x
     }
+
     y = -105
-    if (((height/max_level) * d.level) + y < 0) {
-        y = 0 - ((height/max_level) * d.level)
+    if (((height/max_level) * d.level) + y <= 0) {
+        y = 5 - ((height/max_level) * d.level)
     }
-    else if (((height/max_level) * d.level) - y > height) {
-        y = ((height/max_level) * d.level) - height
+    else if (((height/max_level) * d.level) + y + 210 >= height) {
+        y = height - 5 - 210 - ((height/max_level) * d.level);
     }
+
     rect.transition().attr('y', y).attr("x", x).attr("width", 450).attr("height", 210)
     title.transition().attr('dy', y).attr('font-size', '32px')
 }
@@ -136,8 +178,15 @@ function make_small(rect, title, d, max_level) {
         return -35;
     })
     .attr("x", function (d) {
-        return -90;
+        return -100;
     })
-    .attr("width", 180).attr("height", 70)
+    .attr("width", 200).attr("height", 70)
     title.transition().attr('dy', -35).attr('font-size', '16px')
+}
+
+function countTypes(types) {
+    return Array.from(
+        d3.rollup(types, v => v.length, t => t),
+        ([type, count]) => ({ type, count })
+    );
 }
