@@ -58,6 +58,7 @@ flat_data = sorted(flat_data, key=lambda x: x["id"])
 
 # Add mutation role and type in cancer
 mutation_info = pd.read_csv('cosmic.tsv', sep='\t').to_dict("records")
+
 for i in range(len(flat_data)):
     rel_mutations = [
         find_mutation_reference(mutation, mutation_info) for mutation in flat_data[i]["mutation_names"]

@@ -27,39 +27,36 @@ d3.json('tree.json').then(function(dataset) {
 
 
     var linkG = svg.append('g')
-        .attr('class', 'links-group');
+        .attr('class', 'links-group').attr('transform', 'translate(-350, 0)');
 
     var nodeG = svg.append('g')
-        .attr('class', 'nodes-group');
+        .attr('class', 'nodes-group').attr('transform', 'translate(-350, 0)');
 
     // Add g's for each leaf
     var nodeEnter = nodeG.selectAll('.node')
         .data(dataset)
         .enter()
-        .append('g')
+        .append('g').attr('class', 'node')
         .attr('transform', function (d) {
             return 'translate(' + d.x + ',' + (height/max_level) * d.level + ')';
         }).on("click", function (d) {
-            d = this.__data__;
             this.parentNode.appendChild(this);
-            const rect = d3.select(this).select('rect');
-            const title = d3.select(this).select('text');
+            rect = d3.select(this).select('rect');
 
             if (rect.attr("width") < 225) {
-                d3.select(this).select('.g-pre-expand').attr("opacity", 0.0);
-                d3.select(this).select('.g-post-expand').transition().attr("opacity", 1.0);
-                make_big(rect, title, d, max_level);
+                nodeG.selectAll('.node').each(function(d) {
+                    make_small(d3.select(this), max_level);
+                });
+                make_big(d3.select(this), max_level);
             }
             else {
-                d3.select(this).select('.g-pre-expand').transition().attr("opacity", 1.0);
-                d3.select(this).select('.g-post-expand').attr("opacity", 0.0);
-                make_small(rect, title, d, max_level);
+                make_small(d3.select(this), max_level);
             }
         });
 
     // Add rects for each g for each leaf
     nodeEnter.append('rect')
-        .attr('class', 'node')
+        .attr('class', 'node-box')
         .attr('y', function (d) {
             return -35;
         })
@@ -152,7 +149,14 @@ d3.json('tree.json').then(function(dataset) {
         })
 })
 
-function make_big(rect, title, d, max_level) {
+function make_big(node, max_level) {
+    d = node.datum()
+    rect = node.select('rect');
+    title = node.select('text');
+
+    node.select('.g-pre-expand').attr("opacity", 0.0);
+    node.select('.g-post-expand').transition().attr("opacity", 1.0);
+
     x = -225
     if (d.x + x <= 0) {
         x = 5 - d.x
@@ -173,7 +177,14 @@ function make_big(rect, title, d, max_level) {
     title.transition().attr('dy', y).attr('font-size', '32px')
 }
 
-function make_small(rect, title, d, max_level) {
+function make_small(node, max_level) {
+    d = node.datum()
+    rect = node.select('rect');
+    title = node.select('text');
+
+    node.select('.g-pre-expand').transition().attr("opacity", 1.0);
+    node.select('.g-post-expand').attr("opacity", 0.0);
+
     rect.transition().attr('y', function (d) {
         return -35;
     })
