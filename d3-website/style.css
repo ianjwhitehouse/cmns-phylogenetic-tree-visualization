@@ -1,8 +1,22 @@
+html, body, svg {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;       /* inline → block so %-heights work */
+}
+
+svg {
+  position: absolute;   /* pins it to the viewport */
+  top: 0;
+  left: 0;
+}
+
 text {
   font-family: Arial, sans-serif;
   fill: #333;
 }
-.text-title {
+.node-title {
   font-family: Georgia, serif;
   font-weight: bold;
   fill: #222;
