@@ -1,6 +1,6 @@
 var svg = d3.select('svg');
 var width = +svg.attr('width');
-var tree_width = width/2
+var tree_width = (width/3) * 2;
 var height = +svg.attr('height');
 
 
@@ -81,15 +81,19 @@ d3.json('tree.json').then(function(dataset) {
 
     // Setup gs to hold pre and post expanded visualizations
     var pre_expand = nodeEnter.append('g').attr("class", "g-pre-expand")
-    var post_expand = nodeEnter.append('g').attr("class", "g-post-expand").attr("opacity", 0.0).attr('transform', 'translate(0, 35)')
+    var post_expand = nodeEnter.append('g').attr("class", "g-post-expand").attr("opacity", 0.0).attr('transform', 'translate(100000, 100000)')
 
     // Add bar chart of probs to pre expand visualization
-    var prob_bars = pre_expand.append('g').attr('class', 'sub-chart').attr('transform', 'translate(-60, 35)').attr('fill', '#bbbbbb').attr('stroke', 'black');
-    prob_bars.append('rect').attr('class', 'bar').attr("x", 0).attr("width", 30).attr('height', d => 35 * d.avg_obs_freq[0]).attr('y', d => -35 * d.avg_obs_freq[0])
-    prob_bars.append('rect').attr('class', 'bar').attr("x", 30).attr("width", 30).attr('height', d => 35 * d.avg_obs_freq[1]).attr('y', d => -35 * d.avg_obs_freq[1])
-    prob_bars.append('rect').attr('class', 'bar').attr("x", 60).attr("width", 30).attr('height', d => 35 * d.avg_obs_freq[2]).attr('y', d => -35 * d.avg_obs_freq[2])
-    prob_bars.append('rect').attr('class', 'bar').attr("x", 90).attr("width", 30).attr('height', d => 35 * d.avg_obs_freq[3]).attr('y', d => -35 * d.avg_obs_freq[3])
-    prob_bars.append('line').attr("x1", 0).attr("x2", 120).attr("y1", -35).attr("y2", -35).attr('stroke-width', 2).attr('stroke', 'red');
+    var prob_bars = pre_expand.append('g').attr('class', 'sub-chart').attr('transform', 'translate(-70, 30)').attr('fill', '#bbbbbb').attr('stroke', 'black');
+    prob_bars.append('rect').attr('class', 'bar').attr("x", 4).attr("width", 30).attr('height', d => 40 * d.avg_obs_freq[0]).attr('y', d => -40 * d.avg_obs_freq[0])
+    prob_bars.append('rect').attr('class', 'bar').attr("x", 38).attr("width", 30).attr('height', d => 40 * d.avg_obs_freq[1]).attr('y', d => -40 * d.avg_obs_freq[1])
+    prob_bars.append('rect').attr('class', 'bar').attr("x", 72).attr("width", 30).attr('height', d => 40 * d.avg_obs_freq[2]).attr('y', d => -40 * d.avg_obs_freq[2])
+    prob_bars.append('rect').attr('class', 'bar').attr("x", 106).attr("width", 30).attr('height', d => 40 * d.avg_obs_freq[3]).attr('y', d => -40 * d.avg_obs_freq[3])
+    prob_bars.append('line').attr("x1", 0).attr("x2", 140).attr("y1", -40).attr("y2", -40).attr('stroke-width', 2);
+    prob_bars.append('line').attr("x1", 0).attr("x2", 140).attr("y1", -20).attr("y2", -20).attr('stroke-width', 1);
+    prob_bars.append('line').attr("x1", 0).attr("x2", 0).attr("y1", 0).attr("y2", -40).attr('stroke-width', 2);
+    prob_bars.append('line').attr("x1", 0).attr("x2", 140).attr("y1", 0).attr("y2", 0).attr('stroke-width', 2);
+    prob_bars.append('line').attr("x1", 140).attr("x2", 140).attr("y1", 0).attr("y2", -40).attr('stroke-width', 2);
 
     // Pie chart setup functions
     pie = d3.pie().value(d => d.count).sort(null);
@@ -180,6 +184,7 @@ function make_big(node, max_level) {
         y = height - 5 - 210 - ((height/max_level) * d.level);
     }
 
+    node.select('.g-post-expand').attr('transform', 'translate(' + (225 + x) + ', ' + (105 + y + 25) + ')')
     rect.transition().attr('y', y).attr("x", x).attr("width", 450).attr("height", 210)
     title.transition().attr('dy', y).attr('font-size', '32px')
 }
@@ -199,6 +204,8 @@ function make_small(node, max_level) {
         return -100;
     })
     .attr("width", 200).attr("height", 70)
+
+    node.select('.g-post-expand').attr('transform', 'translate(100000, 100000)')
     title.transition().attr('dy', -35).attr('font-size', '16px')
 }
 
