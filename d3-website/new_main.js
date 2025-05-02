@@ -8,10 +8,8 @@ var height = rect.height;
 var tree_width = (width/4) * 3;
 
 var accents = ["#30a2da", "#fc7f0b", "#fc4f30", "#17becf", "#8cc63e", "#9467bd"];
-var grey = "#bbbbbb"
-
-console.log(width);
-
+var grey = "#bbbbbb";
+var tooltip_grey = "#dddddd";
 
 d3.json('tree.json').then(function(dataset) {
     dataset.sort(function(a, b) {
@@ -100,6 +98,9 @@ d3.json('tree.json').then(function(dataset) {
     for (let i = 0; i < 4; i++) {
         prob_bars.append('rect').attr('class', 'bar').attr("x", [4, 48, 92, 136][i]).attr("width", 40)
             .attr('height', d => 35 * d.avg_obs_freq[i]).attr('y', d => -35 * d.avg_obs_freq[i]).attr("fill", accents[i])
+            .on('mouseover', function (event, d) {
+                show_tooltip("T" + i + ": " + Math.round(d.avg_obs_freq[i] * 100) + "%", event.target, [4, 48, 92, 136][i] + 20, -15);
+            }).on('mouseout', hide_tooltip);
     }
     prob_bars.append('line').attr("x1", 0).attr("x2", 180).attr("y1", -35).attr("y2", -35).attr('stroke-width', 2);
     prob_bars.append('line').attr("x1", 0).attr("x2", 180).attr("y1", -17.5).attr("y2", -17.5).attr('stroke-width', 1);
@@ -123,7 +124,10 @@ d3.json('tree.json').then(function(dataset) {
     type_pie.append('g').attr('class', 'pie').selectAll('path').data(d => pie(countTypes(d.types)))
         .enter().append('path').attr('d', arc).attr('class', 'pie-slice')
         .attr('fill', p => colorForType(p.data.type));
-    type_pie.selectAll('path').append('title').text(p => p.data.type + ": " + p.data.count)
+    type_pie.selectAll('path')
+        .on('mouseover', function (event, d) {
+            show_tooltip(d.data.type + ": " + d.data.count, event.target, 0, -45);
+        }).on('mouseout', hide_tooltip);
 
     // Add quality chart
     var quality_chart = post_expand.append('g').attr('class', 'sub-chart')
@@ -168,7 +172,9 @@ d3.json('tree.json').then(function(dataset) {
             .attr("x", d => -10 * d.size).attr("width", d => 2 * 10 * d.size).attr("y", d => -120 * d.scaled_x1 + 0)
             .attr("height", d => 120 * (d.scaled_x1 - d.scaled_x0)).attr("fill", accents[i])
             .attr("stroke", accents[i])
-            .append('title').text(d => (Math.round(d.x0 * 100) + "%-" + Math.round(d.x1 * 100) + "%: " + d.length));
+            .on('mouseover', function (event, d) {
+                show_tooltip(Math.round(d.x0 * 100) + "%-" + Math.round(d.x1 * 100) + "%: " + d.length, event.target, 0, -120 * d.scaled_x1 + 20);
+            }).on('mouseout', hide_tooltip);
     }
     hists.append('line').attr("x1", -60).attr("y1", 1).attr("x2", 60).attr("y2", 1).attr('stroke-width', 2).attr('stroke', 'black');
     hists.append('line').attr("x1", -60).attr("y1", -121).attr("x2", -60).attr("y2", 1).attr('stroke-width', 2).attr('stroke', 'black');
@@ -244,6 +250,7 @@ function make_big(node, max_level) {
         y = height - 5 - 230 - ((height/max_level) * d.level);
     }
 
+    node.select('.g-pre-expand').attr('transform', 'translate(100000, 100000)')
     node.select('.g-post-expand').attr('transform', 'translate(' + (270 + x) + ', ' + (115 + y + 35) + ')')
     rect.transition().attr('y', y).attr("x", x).attr("width", 540).attr("height", 230)
     title.transition().attr('dy', y + 5).attr('font-size', '32px')
@@ -265,8 +272,24 @@ function make_small(node, max_level) {
     })
     .attr("width", 220).attr("height", 90)
 
+    node.select('.g-pre-expand').attr('transform', 'translate(0, 0)')
     node.select('.g-post-expand').attr('transform', 'translate(100000, 100000)')
     title.transition().attr('dy', -35).attr('font-size', '16px')
+}
+
+function show_tooltip(text, target, x, y) {
+    target = target.getScreenCTM();
+    width = 7 * text.length;
+
+    tool_tip = svg.append('g').attr('class', 'tool-tip').attr('transform', 'translate(' + (target.e + x) + ', ' + (target.f + y) + ')');
+    tool_tip.append('rect').attr("x", -width/2).attr("width", width).attr("y", -50)
+        .attr("height", 25).attr("fill", tooltip_grey).attr('stroke-width', 3);
+    tool_tip.append('text').attr('font-size','12px') .attr('font-weight','bold').attr('text-anchor', 'middle')
+        .attr("alignment-baseline", "middle").attr("dy", -37.5).attr("dx", 0).text(text)
+}
+
+function hide_tooltip() {
+    d3.selectAll('.tool-tip').remove();
 }
 
 function countTypes(types) {
