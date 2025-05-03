@@ -12,6 +12,7 @@ var grey = "#bbbbbb";
 var tooltip_grey = "#dddddd";
 
 d3.json('tree.json').then(function(dataset) {
+    
     dataset.sort(function(a, b) {
         return a["parent"] <= b["parent"]
     })
@@ -25,14 +26,31 @@ d3.json('tree.json').then(function(dataset) {
     console.log(dataset);
 
     // Calc y's
+    all_levels = []
     var max_level = 0
     dataset.forEach(node => {
         if (node.level > max_level) {
             max_level = node.level
         }
+        all_levels.push(node.level)
     });
     max_level += 1;
 
+    //Anna: initialize circle locations
+    freqs = []
+    names = []
+    dataset.forEach(function(cluster){
+        freqs.push(cluster.avg_obs_freq)
+        names.push(cluster.cluster)
+    })
+    y_levels = []
+    all_levels.forEach(l => {
+        y_levels.push((height/max_level) * (l))
+    });
+    console.log(tree_width)
+    x_pos = tree_width * .9; //need a better x pos
+    createBalls(freqs, x_pos, y_levels, names)
+    //Done
 
     var linkG = svg.append('g')
         .attr('class', 'links-group');
@@ -47,7 +65,8 @@ d3.json('tree.json').then(function(dataset) {
         .append('g').attr('class', 'node')
         .attr('transform', function (d) {
             return 'translate(' + d.x + ',' + (height/max_level) * d.level + ')';
-        }).on("click", function (d) {
+        }).on("click", function (d, i) {
+            transitionCircles(i.level-1) //Anna: added to move the circles
             var clicked_node = this
             clicked_node.parentNode.appendChild(clicked_node);
             rect = d3.select(clicked_node).select('rect');
@@ -229,8 +248,8 @@ function make_big(node, max_level) {
     rect = node.select('rect');
     title = node.select('text');
 
-    console.log(node.select('.g-pre-expand'))
-    console.log(node.select('.g-post-expand'))
+    // console.log(node.select('.g-pre-expand'))
+    // console.log(node.select('.g-post-expand'))
     node.select('.g-pre-expand').attr("opacity", 0.0);
     node.select('.g-post-expand').transition().attr("opacity", 1.0);
 

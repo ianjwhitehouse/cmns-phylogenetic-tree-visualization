@@ -14,8 +14,9 @@ svg {
 
 text {
   font-family: Arial, sans-serif;
-  fill: #333;
+  /* fill: #333;*/
 }
+
 .node-title {
   font-family: Georgia, serif;
   font-weight: bold;
