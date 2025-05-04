@@ -11,7 +11,6 @@ var accents = ["#30a2da", "#fc7f0b", "#fc4f30", "#17becf", "#8cc63e", "#9467bd"]
 var grey = "#bbbbbb";
 var tooltip_grey = "#dddddd";
 
-var y_offset = 50;
 
 
 d3.json('tree.json').then(function(dataset) {
@@ -47,21 +46,18 @@ d3.json('tree.json').then(function(dataset) {
     })
     y_levels = []
     all_levels.forEach(l => {
-        y_levels.push((height/max_level) * (l) + y_offset)
+        y_levels.push((height/max_level) * (l))
     });
     var x_pos = [];
-    var start = tree_width * .9; //need a better x pos
+    var start = tree_width * .8; //need a better x pos
     for (let i = 0; i < dataset[0].avg_obs_freq.length; i++){
         x_pos.push(start)
-        start = start + 100;
+        start = start + 150;
     }
-    createBalls(freqs, x_pos, y_levels, names, max_level)
-    //Anna: Done
+    createLegend(x_pos, height*0.5); //create the background legend
+    createBalls(freqs, x_pos, y_levels, names, max_level);
 
-    //Niko: append sample labels columns
-    for (let i = 0; i < x_pos.length; i++) {
-        svg.append('text').attr('font-size','12px').attr('font-weight','bold').attr('x', x_pos[i]).attr('y', 50).text('T'+i);   
-    }
+    //Anna: Done
 
     //console.log(dataset);
     var linkG = svg.append('g')
@@ -76,7 +72,7 @@ d3.json('tree.json').then(function(dataset) {
         .enter()
         .append('g').attr('class', 'node')
         .attr('transform', function (d) {
-            return 'translate(' + d.x + ',' + ((height/max_level) * d.level + y_offset) + ')';
+            return 'translate(' + d.x + ',' + (height/max_level) * d.level + ')';
         }).on("click", function (d, i) {
             transitionCircles(i.level-1, i.id-1) //Anna: added to move the circles
             var clicked_node = this
@@ -234,7 +230,7 @@ d3.json('tree.json').then(function(dataset) {
         .attr('class', 'link')
         .attr('stroke-width', 6)
         .attr('y1', function (d) {
-            return ((height/max_level) * (d.level) + y_offset);
+            return (height/max_level) * (d.level);
         })
         .attr('x1', function (d) {
             return d.x;
@@ -248,10 +244,10 @@ d3.json('tree.json').then(function(dataset) {
         })
         .attr('y2', function(d) {
             if (d.parent === null) {
-                return ((height/max_level) * (d.level) + y_offset);
+                return (height/max_level) * (d.level);
             }
             var par_d = dataset.filter(x => x["id"] === d.parent)[0];
-            return ((height/max_level) * (par_d.level) + y_offset);
+            return (height/max_level) * (par_d.level);
         })
 })
 
@@ -274,11 +270,11 @@ function make_big(node, max_level) {
     }
 
     y = -115
-    if (((height/max_level) * d.level + y_offset) + y <= 0) {
+    if (((height/max_level) * d.level) + y <= 0) {
         y = 5 - ((height/max_level) * d.level)
     }
-    else if (((height/max_level) * d.level + y_offset) + y + 230 >= height) {
-        y = height - 5 - 230 - ((height/max_level) * d.level + y_offset);
+    else if (((height/max_level) * d.level) + y + 230 >= height) {
+        y = height - 5 - 230 - ((height/max_level) * d.level);
     }
 
     node.select('.g-pre-expand').attr('transform', 'translate(100000, 100000)')
