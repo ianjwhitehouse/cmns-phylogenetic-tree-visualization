@@ -33,9 +33,11 @@ def find_mutation_reference(mutation, ref_mutations_dict):
             loc = (int(loc[1].split("-")[0]), int(loc[1].split("-")[1]))
 
             if chromosome == mutation[0] and loc[0] <= mutation[1] <= loc[1]:
+                print(ref_mutation)
+                print()
                 return ref_mutation
         except ValueError:
-            print(ref_mutation)
+            print()
     return None
 
 
@@ -69,6 +71,9 @@ for i in range(len(flat_data)):
     ]
     flat_data[i]["types"] = [
         mut["Tumour Types(Somatic)"] if mut is not None else "no known type" for mut in rel_mutations
+    ]
+    flat_data[i]["gene_symbols"] = [
+        mut["Gene Symbol"] if mut is not None else "no known gene" for mut in rel_mutations
     ]
 
 # print(flat_data)
