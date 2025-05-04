@@ -211,28 +211,69 @@ function createBalls(arr, x_pos, y_pos, cluster_names, max_levels){
             .classed(class_name, true);
     }
     
-    //Make the starting labels
-    var level = 0
+    //Make all labels
+    //for each level
+    for (let level = 0; level < percentages_left[0].length; level++){
+        //x = sample number
+        for (let x = 0; x < percentages_left.length; x++){
+            class_name = "label" + x.toString() + level.toString() + "left";
+            var labels = text_labels_left[x][level].map((label, i) => ({
+                label: label,
+                x: text_locations[x][level][i][0],
+                y: text_locations[x][level][i][1],
+                color: colors[x][i % 2]
+            }));
+            d3.select("svg")
+                .selectAll("text.dynamic-label")
+                .filter("." + class_name)
+                .data(labels)
+                .join("text")
+                .attr("class", "dynamic-label")
+                .attr("opacity", 0)
+                .attr("x", d => d.x)
+                .attr("y", d => d.y)
+                .text(d => d.label)
+                .attr("font-size", "14px")
+                .attr("fill", d => d.color)
+                .classed(class_name, true);
+        }
+    }
+    for (let level = 0; level < percentages_left[0].length; level++){
+        //x = sample number
+        for (let x = 0; x < percentages_left.length; x++){
+            class_name = "label" + x.toString() + level.toString() + "right";
+            var labels = text_labels_right[x][level].map((label, i) => ({
+                label: label,
+                x: text_locations[x][level][i][0],
+                y: text_locations[x][level][i][1],
+                color: colors[x][i % 2]
+            }));
+            d3.select("svg")
+                .selectAll("text.dynamic-label")
+                .filter("." + class_name)
+                .data(labels)
+                .join("text")
+                .attr("class", "dynamic-label")
+                .attr("opacity", 0)
+                .attr('font-weight','bold')
+                .attr("x", d => d.x)
+                .attr("y", d => d.y)
+                .text(d => d.label)
+                .attr("font-size", "14px")
+                .attr("fill", d => d.color)
+                .attr("text-anchor", "middle")
+                .classed(class_name, true);
+        }
+    }
+    //activate the top level labels
     for (let x = 0; x < percentages_left.length; x++){
-        class_name = "label" + x.toString()
-        var labels = text_labels_left[x][level].map((label, i) => ({
-            label: label,
-            x: text_locations[x][level][i][0],
-            y: text_locations[x][level][i][1],
-            color: colors[x][i % 2]
-        }));
+        class_name = "label" + x.toString() + '0left' ;
         d3.select("svg")
             .selectAll("text.dynamic-label")
             .filter("." + class_name)
-            .data(labels)
-            .join("text")
-            .attr("class", "dynamic-label")
-            .attr("x", d => d.x)
-            .attr("y", d => d.y)
-            .text(d => d.label)
-            .attr("font-size", "14px")
-            .attr("fill", d => d.color)
-            .classed(class_name, true);
+            .attr("opacity", 1)
+            .attr("text-anchor", "middle")
+            .attr('font-weight','bold');
     }
 }
 
@@ -242,18 +283,23 @@ function transitionCircles(level, id){
     if (level == id){
         var text_labels = text_labels_left;
         var locations = perm_locations_left;
+        var dir = 'left'
     }
     else {
         var text_labels = text_labels_right;
         var locations = perm_locations_right;
+        var dir = 'right'
     }
     if (level == prev_level){
         return;
     }
     //first, remove the labels
-    d3.select("svg")
-        .selectAll("text.dynamic-label")
-        .remove();
+    for (let x = 0; x < percentages_left.length; x++){
+        class_name = "label" + x.toString() + '0';
+        d3.select("svg")
+            .selectAll("text.dynamic-label")
+            .attr("opacity", 0);
+    }
     for (let x = 0; x < percentages_left.length; x++){
         class_name = "circle" + x.toString()
         //Move the balls to new positions
@@ -334,28 +380,18 @@ function transitionCircles(level, id){
                     }
                 });
         }
-        //add new text boxes in
-        var labels = text_labels[x][level].map((label, i) => ({
-            label: label,
-            x: text_locations[x][level][i][0],
-            y: text_locations[x][level][i][1],
-            color: colors[x][i % 2]
-        }));
-        class_name = "label" + x.toString()
+    
+    }
+    //activate the label
+    for (let x = 0; x < percentages_left.length; x++){
+        class_name = "label" + x.toString() + level.toString() + dir;
         d3.select("svg")
             .selectAll("text.dynamic-label")
             .filter("." + class_name)
-            .data(labels)
-            .join("text")
-            .attr("class", "dynamic-label")
-            .attr("x", d => d.x)
-            .attr("y", d => d.y)
-            .text(d => d.label)
-            .attr("font-size", "14px")
-            .attr("fill", d => d.color)
+            .transition().delay(1500).duration(500)
             .style("text-anchor", "middle")
-            .transition().delay(1500).duration(900); //transition isn't working AT ALL
-    
+            .attr("opacity", 1)
+            .attr('font-weight','bold');
     }
     prev_level = level;
 }
