@@ -11,6 +11,10 @@ var accents = ["#30a2da", "#fc7f0b", "#fc4f30", "#17becf", "#8cc63e", "#9467bd"]
 var grey = "#bbbbbb";
 var tooltip_grey = "#dddddd";
 
+var y_offset = 50;
+
+var click_time = 0;
+var click_wait = 2000;
 
 
 d3.json('tree.json').then(function(dataset) {
@@ -59,6 +63,11 @@ d3.json('tree.json').then(function(dataset) {
 
     //Anna: Done
 
+    //Niko: append sample labels columns
+    for (let i = 0; i < x_pos.length; i++) {
+        svg.append('text').attr('font-size','12px').attr('font-weight','bold').attr('x', x_pos[i]).attr('y', 50).text('T'+i);   
+    }
+
     //console.log(dataset);
     var linkG = svg.append('g')
         .attr('class', 'links-group');
@@ -72,9 +81,15 @@ d3.json('tree.json').then(function(dataset) {
         .enter()
         .append('g').attr('class', 'node')
         .attr('transform', function (d) {
-            return 'translate(' + d.x + ',' + (height/max_level) * d.level + ')';
-        }).on("click", function (d, i) {
-            transitionCircles(i.level-1, i.id-1) //Anna: added to move the circles
+            return 'translate(' + d.x + ',' + ((height/max_level) * d.level + y_offset) + ')';
+        }).on("click", function handleClick(d, i) {
+            if (Date.now() - click_time < click_wait) {
+                return;
+            } else {
+                click_time = Date.now();
+            }
+
+            _ = transitionCircles(i.level-1, i.id-1) //Anna: added to move the circles
             var clicked_node = this
             clicked_node.parentNode.appendChild(clicked_node);
             rect = d3.select(clicked_node).select('rect');
@@ -144,16 +159,18 @@ d3.json('tree.json').then(function(dataset) {
         return type.startsWith("no known") ? grey : accents_scale(type);
     }
 
+    console.log(dataset);
     // Add pie chart of types to post-expand visualizations
     var type_pie = post_expand.append('g').attr('class', 'sub-chart').attr('transform', 'translate(-180, 0)')
     type_pie.append('text').attr('font-size','16px') .attr('font-weight','bold').attr('text-anchor', 'middle')
         .attr("alignment-baseline", "text-after-edge").attr("dy", -70).attr('class', 'sub-chart-title').text("Tumour Types")
-    type_pie.append('g').attr('class', 'pie').selectAll('path').data(d => pie(countTypes(d.types)))
+    type_pie.append('g').attr('class', 'pie').selectAll('path').data(d => pie(countTypes([d.types, d.roles, d.gene_ids])))
         .enter().append('path').attr('d', arc).attr('class', 'pie-slice')
         .attr('fill', p => colorForType(p.data.type));
     type_pie.selectAll('path')
         .on('mouseover', function (event, d) {
-            show_tooltip(d.data.type + ": " + d.data.count, event.target, 0, -45);
+            console.log(d)
+            show_tooltip("Type: " + d.data.type + ": " + d.data.count, event.target, 0, -45);
         }).on('mouseout', hide_tooltip);
 
     // Add quality chart
@@ -319,9 +336,17 @@ function hide_tooltip() {
     d3.selectAll('.tool-tip').remove();
 }
 
-function countTypes(types) {
+function countTypes(data) {
+    arr1 = data[0];
+    arr2 = data[1];
+    arr3 = data[2];
+    combined = arr1.map((item, index) => `${item}; Role: ${arr2[index]}; Gene Id: ${arr3[index]}`);
+    console.log(Array.from(
+        d3.rollup(combined, v => v.length, t => t),
+        ([type, count]) => ({ type, count })
+    ));
     return Array.from(
-        d3.rollup(types, v => v.length, t => t),
+        d3.rollup(combined, v => v.length, t => t),
         ([type, count]) => ({ type, count })
     );
 }
