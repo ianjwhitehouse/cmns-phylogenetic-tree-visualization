@@ -2,7 +2,7 @@
 
 //SET UP GLOBAL VARIABLES
 // var percentages = [0.97, 0.7, 0.4, 0.33];
-var percentages = []
+var percentages_left = []
 // var x_pos = 100;
 // var y_pos = [100, 200, 300, 400];
 var radius = 4;
@@ -12,10 +12,12 @@ var colors = []//[['red', 'steelblue'], ['steelblue', 'green'], ['green', 'purpl
 var background = "rgb(255, 255, 255)";
 var perm_locations = [];
 var prev_level = 0;
-var text_labels = [];
+var text_labels_left = [];
 var text_locations = [];
+var percentages_right = [];
+var text_labels_right = []
 
-function createBalls(arr, x_pos, y_pos, cluster_names){
+function createBalls(arr, x_pos, y_pos, cluster_names, max_levels){
     //set the new global variables
     console.log(arr);
 
@@ -27,40 +29,62 @@ function createBalls(arr, x_pos, y_pos, cluster_names){
     //     percentages.push(sum / element.length);
     // });
     arr.forEach(element => {
-            if (element[0] == 0){
-                percentages.push(1);
+        var p = element[0]
+        if (p == 0){
+            p = 1;
+        }
+        if (percentages_left.length == max_levels-1){
+            if (percentages_right.length == 0){
+                percentages_right = percentages_left.slice(0,max_levels-1-2); //this is kinda cheating cause I know there's a difference of 2
             }
-            else{
-                percentages.push(element[0]);
-            }
-        }); //now we're just doing the first set
-    console.log(percentages);
-    percentages.forEach(element => {
+            percentages_right.push(p);
+        }
+        else{
+            percentages_left.push(p);
+        }
+    }); //now we're just doing the first set
+    console.log(max_levels)
+    console.log(percentages_left);
+    console.log(percentages_right);
+    percentages_left.forEach(element => {
         colors.push(['#fc4f30', '#17becf']);
     });
     var curr_string = ''; 
-    for (let i = 0; i < cluster_names.length; i++){ //!!! Need a case for when percentage is 0
-        if (percentages[i] == 1){
+    for (let i = 0; i < cluster_names.length; i++){
+        if (percentages_left[i] == 1){
             curr_string = curr_string;
-            text_labels.push(['No new mutations', curr_string]);
+            text_labels_left.push(['No new mutations', curr_string]);
         }
         else if (i === 0){
-            text_labels.push(["No mutations", cluster_names[i].toString()]);
+            text_labels_left.push(["No mutations", cluster_names[i].toString()]);
             curr_string = curr_string  + cluster_names[i].toString();
         }
         else {
             var temp = [curr_string];
             curr_string = curr_string + ", " + cluster_names[i].toString();
-            temp.push(curr_string);
-            text_labels.push(temp);
+            if (text_labels_left.length == max_levels-1){
+                if (text_labels_right.length == 0){
+                    text_labels_right = text_labels_left.slice(0,max_levels-1-2);
+                    curr_string = curr_string.slice(0,-9);
+                    temp = [curr_string];
+                    curr_string = curr_string + ", " + cluster_names[i].toString();
+                }
+                temp.push(curr_string);
+                text_labels_right.push(temp);
+            }
+            else{
+                temp.push(curr_string);
+                text_labels_left.push(temp);
+            }
         }
     }
-    console.log(text_labels);
+    console.log(text_labels_left);
+    console.log(text_labels_right);
 
 
     locations = [];
     num_balls = total;
-    for (let i = 0; i < percentages.length; i++){
+    for (let i = 0; i < percentages_left.length; i++){
         //start with random locations
         var data = Array.from({ length: num_balls }, (_, index) => ({
             x: Math.random() * x_pos - (index * 15),
@@ -87,11 +111,11 @@ function createBalls(arr, x_pos, y_pos, cluster_names){
         // Add id and color attributes
         data = data.map((ball, index) => ({
             ...ball,
-            color: Boolean(index <= (num_balls * (1 - percentages[i])) && percentages[i] < 1)
+            color: Boolean(index <= (num_balls * (1 - percentages_left[i])) && percentages_left[i] < 1)
         }));
 
         perm_locations.push(data);
-        num_balls = num_balls * percentages[i];
+        num_balls = num_balls * percentages_left[i];
     }
     //Make the starting top level circles
     console.log(perm_locations);
@@ -117,7 +141,7 @@ function createBalls(arr, x_pos, y_pos, cluster_names){
     
     //Make the starting labels
     var level = 0
-    var labels = text_labels[level].map((label, i) => ({
+    var labels = text_labels_left[level].map((label, i) => ({
         label: label,
         x: text_locations[level][i][0],
         y: text_locations[level][i][1],
@@ -137,7 +161,17 @@ function createBalls(arr, x_pos, y_pos, cluster_names){
 
 
 //Move function: 
-function transitionCircles(level){
+function transitionCircles(level, id){
+    console.log(level);
+    console.log(id);
+    if (level == id){
+        var percentages = percentages_left;
+        var text_labels = text_labels_left;
+    }
+    else {
+        var percentages = percentages_right;
+        var text_labels = text_labels_right;
+    }
     if (level == prev_level){
         return;
     }
@@ -242,21 +276,21 @@ function transitionCircles(level){
 }
 
 
-//Listeners
-var button0 = document.getElementById('moveButton0');
-var button1 = document.getElementById('moveButton1');
-var button2 = document.getElementById('moveButton2');
-var button3 = document.getElementById('moveButton3');
+// //Listeners
+// var button0 = document.getElementById('moveButton0');
+// var button1 = document.getElementById('moveButton1');
+// var button2 = document.getElementById('moveButton2');
+// var button3 = document.getElementById('moveButton3');
 
-button0.addEventListener('click', function() {
-    transitionCircles(0)
-});
-button1.addEventListener('click', function() {
-    transitionCircles(1)
-});
-button2.addEventListener('click', function() {
-    transitionCircles(2)
-});
-button3.addEventListener('click', function() {
-    transitionCircles(3)
-});
+// button0.addEventListener('click', function() {
+//     transitionCircles(0)
+// });
+// button1.addEventListener('click', function() {
+//     transitionCircles(1)
+// });
+// button2.addEventListener('click', function() {
+//     transitionCircles(2)
+// });
+// button3.addEventListener('click', function() {
+//     transitionCircles(3)
+// });

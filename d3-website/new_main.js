@@ -23,7 +23,6 @@ d3.json('tree.json').then(function(dataset) {
         level_size = filtered_list.length + 1;
         node["x"] = (filtered_list.indexOf(node) + 1) * (tree_width/level_size);
     });
-    console.log(dataset);
 
     // Calc y's
     all_levels = []
@@ -47,11 +46,10 @@ d3.json('tree.json').then(function(dataset) {
     all_levels.forEach(l => {
         y_levels.push((height/max_level) * (l))
     });
-    console.log(tree_width)
     x_pos = tree_width * .9; //need a better x pos
-    createBalls(freqs, x_pos, y_levels, names)
+    createBalls(freqs, x_pos, y_levels, names, max_level)
     //Done
-
+    console.log(dataset);
     var linkG = svg.append('g')
         .attr('class', 'links-group');
 
@@ -66,7 +64,7 @@ d3.json('tree.json').then(function(dataset) {
         .attr('transform', function (d) {
             return 'translate(' + d.x + ',' + (height/max_level) * d.level + ')';
         }).on("click", function (d, i) {
-            transitionCircles(i.level-1) //Anna: added to move the circles
+            transitionCircles(i.level-1, i.id-1) //Anna: added to move the circles
             var clicked_node = this
             clicked_node.parentNode.appendChild(clicked_node);
             rect = d3.select(clicked_node).select('rect');
