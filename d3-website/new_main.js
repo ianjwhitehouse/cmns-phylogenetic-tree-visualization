@@ -59,7 +59,9 @@ d3.json('tree.json').then(function(dataset) {
     //Anna: Done
 
     //Niko: append sample labels columns
-    //svg.append('text').attr('font-size','12px').attr('font-weight','bold').attr('x', '250').attr('y', '250');
+    for (let i = 0; i < x_pos.length; i++) {
+        svg.append('text').attr('font-size','12px').attr('font-weight','bold').attr('x', x_pos[i]).attr('y', 50).text('T'+i);   
+    }
 
     //console.log(dataset);
     var linkG = svg.append('g')
