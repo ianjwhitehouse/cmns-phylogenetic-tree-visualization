@@ -13,6 +13,9 @@ var tooltip_grey = "#dddddd";
 
 var y_offset = 50;
 
+var click_time = 0;
+var click_wait = 2000;
+
 
 d3.json('tree.json').then(function(dataset) {
     
@@ -78,8 +81,13 @@ d3.json('tree.json').then(function(dataset) {
         .attr('transform', function (d) {
             return 'translate(' + d.x + ',' + ((height/max_level) * d.level + y_offset) + ')';
         }).on("click", function handleClick(d, i) {
-            var done = false
-            done = transitionCircles(i.level-1, i.id-1) //Anna: added to move the circles
+            if (Date.now() - click_time < click_wait) {
+                return;
+            } else {
+                click_time = Date.now();
+            }
+
+            _ = transitionCircles(i.level-1, i.id-1) //Anna: added to move the circles
             var clicked_node = this
             clicked_node.parentNode.appendChild(clicked_node);
             rect = d3.select(clicked_node).select('rect');
@@ -95,11 +103,6 @@ d3.json('tree.json').then(function(dataset) {
             }
             else {
                 make_small(d3.select(this), max_level);
-            }
-
-            // Re-enable after processing is done
-            if (done == true) {
-                nodeG.selectAll('.node').on("click", handleClick);
             }
         });
 
