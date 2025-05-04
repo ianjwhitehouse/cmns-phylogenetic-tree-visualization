@@ -14,11 +14,17 @@ var tooltip_grey = "#dddddd";
 var y_offset = 50;
 
 
+// Load tree.json and build chromosome annotations from mutation_names
 d3.json('tree.json').then(function(dataset) {
-    
-    dataset.sort(function(a, b) {
-        return a["parent"] <= b["parent"]
-    })
+    // Build chromosome annotations with geneId only
+    dataset.forEach(d => {
+      d.chromosome_annotations = d.mutation_names.map((m, i) => {
+        const chrom = m.split(':')[0].replace(/^chr/, '');
+        // Pull the actual gene name from d.geneId
+        const geneId = (d.geneId && d.geneId[i]) ? d.geneId[i] : null;
+        return { chrom: chrom, geneId: geneId };
+      });
+    });
 
     // Calc x's
     dataset.forEach(node => {
@@ -220,11 +226,103 @@ d3.json('tree.json').then(function(dataset) {
             return Math.round(d.allele_freq.min * 100) + "%";
         });
 
-    // Add third visualization
-    var third_chart = post_expand.append('g').attr('class', 'sub-chart').attr('transform', 'translate(180, 0)')
-    third_chart.append('text').attr('font-size','16px') .attr('font-weight','bold').attr('text-anchor', 'middle')
-        .attr("alignment-baseline", "text-after-edge").attr("dy", -70).attr('class', 'chart-title').text("Placeholder")
+    // Add chromosome distribution histogram
+    post_expand.each(function(d) {
+      console.log("Chromosome histogram init for cluster", d.cluster, "with annotations:", d.chromosome_annotations);
+      var chart = d3.select(this).append('g')
+          .attr('class', 'sub-chart')
+          .attr('transform', 'translate(100, 0)');
 
+      chart.append('text')
+          .attr('font-size', '16px')
+          .attr('font-weight', 'bold')
+          .attr('text-anchor', 'middle')
+          .attr('x', 75)
+          .attr('alignment-baseline', 'text-after-edge')
+          .attr('dy', -70)
+          .text('Chr. Distribution');
+
+      // Group for axes and bars, moved down to align with other charts
+      var histGroup = chart.append('g')
+          .attr('transform', 'translate(0,55)');
+
+      histGroup.append('line')
+          .attr('x1', 0).attr('y1', 0)
+          .attr('x2', 0).attr('y2', -100)
+          .attr('stroke-width', 2).attr('stroke', 'black');
+      histGroup.append('line')
+          .attr('x1', 0).attr('y1', 0)
+          .attr('x2', 150).attr('y2', 0)
+          .attr('stroke-width', 2).attr('stroke', 'black');
+
+      var ann = d.chromosome_annotations || [];
+      console.log("Annotations array:", ann);
+      var counts = Array.from(
+          d3.rollup(ann, v => v.length, a => a.chrom),
+          ([chrom, count]) => ({chrom, count, annotations: ann})
+      );
+      // Sort chromosomes numerically ascending
+      counts.sort((a, b) => {
+          var aN = isNaN(+a.chrom) ? a.chrom : +a.chrom;
+          var bN = isNaN(+b.chrom) ? b.chrom : +b.chrom;
+          return aN - bN;
+      });
+      var topChroms = counts;
+      console.log("All chromosomes for cluster", d.cluster, ":", topChroms.map(c => c.chrom), "counts:", topChroms.map(c => c.count));
+
+      var xScale = d3.scaleBand()
+          .domain(topChroms.map(c => c.chrom))
+          .range([0, 150])
+          .padding(0.1);
+      var yScale = d3.scaleLinear()
+          .domain([0, d3.max(topChroms, c => c.count)])
+          .range([0, 100]);
+
+      // Color scale for chromosomes
+      var chromColor = d3.scaleOrdinal(accents).domain(topChroms.map(c => c.chrom));
+
+      histGroup.selectAll('.chrom-bar')
+          .data(topChroms)
+          .enter().append('rect')
+          .attr('class', 'chrom-bar')
+          .attr('x', c => xScale(c.chrom))
+          .attr('y', c => -yScale(c.count))
+          .attr('width', xScale.bandwidth())
+          .attr('height', c => yScale(c.count))
+          .attr('fill', c => chromColor(c.chrom))
+          .attr('stroke', c =>
+              c.annotations.some(a => a.chrom === c.chrom && a.geneId && a.geneId !== "no gene")
+                  ? 'black' : 'none'
+          )
+          .attr('stroke-width', c =>
+              c.annotations.some(a => a.chrom === c.chrom && a.geneId && a.geneId !== "no gene")
+                  ? 2 : 0
+          )
+          .on('mouseover', function(event, c) {
+              // Debug logs for geneId grouping
+              // List unique gene IDs on this chromosome, excluding "no gene"
+              var genes = Array.from(new Set(
+                  c.annotations
+                    .filter(a => a.chrom === c.chrom && a.geneId && a.geneId !== "no gene")
+                    .map(a => a.geneId)
+              )).join(', ');
+              show_tooltip(
+                  `Chr ${c.chrom}: ${c.count}` + (genes ? ` (${genes})` : ''),
+                  event.target, 0, -10
+              );
+          })
+          .on('mouseout', hide_tooltip);
+
+      histGroup.selectAll('.chrom-label')
+          .data(topChroms.filter((c, i) => i % 5 === 0))
+          .enter().append('text')
+          .attr('class', 'chrom-label')
+          .attr('x', c => xScale(c.chrom) + xScale.bandwidth() / 2)
+          .attr('y', 15)
+          .attr('text-anchor', 'middle')
+          .attr('font-size', '8px')
+          .text(c => c.chrom);
+    });
 
     // Add branches
     var linkEnter = linkG.selectAll('.link')
@@ -253,7 +351,8 @@ d3.json('tree.json').then(function(dataset) {
             var par_d = dataset.filter(x => x["id"] === d.parent)[0];
             return ((height/max_level) * (par_d.level) + y_offset);
         })
-})
+// end Promise.all then
+});
 
 function make_big(node, max_level) {
     d = node.datum()

@@ -71,6 +71,10 @@ for i in range(len(flat_data)):
         mut["Tumour Types(Somatic)"] if mut is not None else "no known type" for mut in rel_mutations
     ]
 
+    flat_data[i]["geneId"] = [
+        mut["Gene Symbol"] if mut is not None else "no gene" for mut in rel_mutations
+    ]
+
 # print(flat_data)
 with open("d3-website/tree.json", "w") as f:
     dump(flat_data, f)
