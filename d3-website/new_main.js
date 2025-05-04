@@ -11,6 +11,8 @@ var accents = ["#30a2da", "#fc7f0b", "#fc4f30", "#17becf", "#8cc63e", "#9467bd"]
 var grey = "#bbbbbb";
 var tooltip_grey = "#dddddd";
 
+
+
 d3.json('tree.json').then(function(dataset) {
     
     dataset.sort(function(a, b) {
@@ -46,10 +48,16 @@ d3.json('tree.json').then(function(dataset) {
     all_levels.forEach(l => {
         y_levels.push((height/max_level) * (l))
     });
-    x_pos = tree_width * .9; //need a better x pos
+    var x_pos = [];
+    var start = tree_width * .9; //need a better x pos
+    for (let i = 0; i < dataset[0].avg_obs_freq.length; i++){
+        x_pos.push(start)
+        start = start + 100;
+    }
     createBalls(freqs, x_pos, y_levels, names, max_level)
-    //Done
-    console.log(dataset);
+    //Anna: Done
+
+    //console.log(dataset);
     var linkG = svg.append('g')
         .attr('class', 'links-group');
 
