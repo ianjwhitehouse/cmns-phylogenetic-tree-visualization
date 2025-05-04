@@ -159,13 +159,13 @@ d3.json('tree.json').then(function(dataset) {
     var type_pie = post_expand.append('g').attr('class', 'sub-chart').attr('transform', 'translate(-180, 0)')
     type_pie.append('text').attr('font-size','16px') .attr('font-weight','bold').attr('text-anchor', 'middle')
         .attr("alignment-baseline", "text-after-edge").attr("dy", -70).attr('class', 'sub-chart-title').text("Tumour Types")
-    type_pie.append('g').attr('class', 'pie').selectAll('path').data(d => pie(countTypes([d.types, d.roles, d.gene_symbols])))
+    type_pie.append('g').attr('class', 'pie').selectAll('path').data(d => pie(countTypes([d.types, d.roles, d.gene_ids])))
         .enter().append('path').attr('d', arc).attr('class', 'pie-slice')
         .attr('fill', p => colorForType(p.data.type));
     type_pie.selectAll('path')
         .on('mouseover', function (event, d) {
             console.log(d)
-            show_tooltip("Types: " + d.data.type + ": " + d.data.count, event.target, 0, -45);
+            show_tooltip("Type: " + d.data.type + ": " + d.data.count, event.target, 0, -45);
         }).on('mouseout', hide_tooltip);
 
     // Add quality chart
@@ -335,7 +335,7 @@ function countTypes(data) {
     arr1 = data[0];
     arr2 = data[1];
     arr3 = data[2];
-    combined = arr1.map((item, index) => `${item}; Roles: ${arr2[index]}; Genes: ${arr3[index]}`);
+    combined = arr1.map((item, index) => `${item}; Role: ${arr2[index]}; Gene Id: ${arr3[index]}`);
     console.log(Array.from(
         d3.rollup(combined, v => v.length, t => t),
         ([type, count]) => ({ type, count })

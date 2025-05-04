@@ -73,7 +73,10 @@ for i in range(len(flat_data)):
         mut["Tumour Types(Somatic)"] if mut is not None else "no known type" for mut in rel_mutations
     ]
     flat_data[i]["gene_symbols"] = [
-        mut["Gene Symbol"] if mut is not None else "no known gene" for mut in rel_mutations
+        mut["Gene Symbol"] if mut is not None else "no known gene symbol" for mut in rel_mutations
+    ]
+    flat_data[i]["gene_ids"] = [
+        mut["Entrez GeneId"] if mut is not None else "no known gene id" for mut in rel_mutations
     ]
 
 # print(flat_data)
