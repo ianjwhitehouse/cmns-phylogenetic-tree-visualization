@@ -328,7 +328,7 @@ d3.json('tree.json').then(function(dataset) {
               )).join(', ');
               show_tooltip(
                   `Chr ${c.chrom}: ${c.count}` + (genes ? ` (${genes})` : ''),
-                  event.target, xScale(c.chrom), -10, scale
+                  event.target, xScale(c.chrom) + (xScale.bandwidth()/2), -10, scale
               );
           })
           .on('mouseout', hide_tooltip);
