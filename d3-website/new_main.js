@@ -230,7 +230,7 @@ d3.json('tree.json').then(function(dataset) {
         hists.append('line').attr("x1", -45 + (30 * i)).attr("y1", -120).attr("x2", -45 + (30 * i)).attr("y2", 0).attr('stroke-width', 1).attr('stroke', 'black');
         hists.append('text').attr('font-size','12px') .attr('font-weight','bold').attr('text-anchor', 'middle').attr('dx', -45 + (30 * i)).attr('dy', 2)
             .attr("alignment-baseline", "text-before-edge").attr('class', 'sub-chart-label').text(function (d) {
-                return "T" + i;
+                return "T" + (i + 1);
             });
 
         hists.append('g').attr('transform', 'translate(' + (-45 + (30 * i)) + ', 0)').selectAll("rect")
@@ -308,6 +308,7 @@ d3.json('tree.json').then(function(dataset) {
           .attr('x2', 150).attr('y2', 0)
           .attr('stroke-width', 2).attr('stroke', 'black');
 
+      // Add Y-axis ticks and labels (correct placement)
       var ann = d.chromosome_annotations || [];
       console.log("Annotations array:", ann);
       var counts = Array.from(
@@ -333,6 +334,15 @@ d3.json('tree.json').then(function(dataset) {
 
       // Color scale for chromosomes
       var chromColor = d3.scaleOrdinal(accents).domain(topChroms.map(c => c.chrom));
+
+      // Add Y-axis ticks and labels (correct placement)
+      var yAxisScale = d3.scaleLinear()
+          .domain([0, d3.max(topChroms, c => c.count)])
+          .range([0, -100]);
+      var yAxis = d3.axisLeft(yAxisScale).ticks(5);
+      histGroup.append('g')
+          .attr('class', 'y-axis')
+          .call(yAxis);
 
       histGroup.selectAll('.chrom-bar')
           .data(topChroms)
@@ -490,3 +500,46 @@ function countTypes(data) {
         ([type, count]) => ({ type, count })
     );
 }
+
+// Add button and overlay for tumor samples origin image
+d3.select('body').append('button')
+    .attr('id', 'show-origin-btn')
+    .style('position', 'fixed')
+    .style('top', '10px')
+    .style('right', '10px')
+    .style('padding', '10px 15px')
+    .style('font-size', '14px')
+    .style('cursor', 'pointer')
+    .text('Show tumor samples origin 🧬')
+    .on('click', function() {
+        // greyed-out overlay
+        var overlay = d3.select('body').append('div')
+            .attr('class', 'overlay')
+            .style('position', 'fixed')
+            .style('top', '0')
+            .style('left', '0')
+            .style('width', '100%')
+            .style('height', '100%')
+            .style('background', 'rgba(0,0,0,0.7)')
+            .style('display', 'flex')
+            .style('justify-content', 'center')
+            .style('align-items', 'center')
+            .style('z-index', '9999');
+
+        // display image
+        var img = overlay.append('img')
+            .attr('src', 'tumor_origin.png')
+            .style('max-width', '80%')
+            .style('max-height', '80%')
+            .style('box-shadow', '0px 0px 10px #fff');
+
+        // prevent overlay removal on image click
+        img.on('click', function(event) {
+            event.stopPropagation();
+        });
+
+        // clicking outside image closes overlay
+        overlay.on('click', function() {
+            overlay.remove();
+        });
+    });
