@@ -1,20 +1,22 @@
 var svg = d3.select('svg');
 var svgNode = svg.node();
 
+var y_offset = 50;
 var rect   = svgNode.getBoundingClientRect();
 var width  = rect.width;
-var height = rect.height;
+var height = rect.height - y_offset;
 
-var tree_width = (width/4) * 3;
+var tree_width = (width/5) * 3;
 
 var accents = ["#30a2da", "#fc7f0b", "#fc4f30", "#17becf", "#8cc63e", "#9467bd"];
 var grey = "#bbbbbb";
 var tooltip_grey = "#dddddd";
 
-var y_offset = 50;
-
 var click_time = 0;
-var click_wait = 2000;
+var click_wait = 1000;
+
+var desired_vert_space = 0.025;
+var scale = 1.0
 
 
 // Load tree.json and build chromosome annotations from mutation_names
@@ -47,6 +49,12 @@ d3.json('tree.json').then(function(dataset) {
     });
     max_level += 1;
 
+    // Calc scale factor
+    while (height/max_level < scale * 90 * (desired_vert_space * 2 + 1)) {
+        scale *= 0.99;
+    }
+    console.log(scale);
+
     //Anna: initialize circle locations
     freqs = []
     names = []
@@ -56,7 +64,7 @@ d3.json('tree.json').then(function(dataset) {
     })
     y_levels = []
     all_levels.forEach(l => {
-        y_levels.push((height/max_level) * (l))
+        y_levels.push(((height/max_level) * l) + y_offset)
     });
     var x_pos = [];
     var start = tree_width * .8; //need a better x pos
@@ -70,10 +78,13 @@ d3.json('tree.json').then(function(dataset) {
     //Anna: Done
 
     //console.log(dataset);
-    var linkG = svg.append('g')
+    var mainG = svg.append('g').attr('class', 'tree')
+        .attr('transform', 'translate(0, ' + y_offset + ')');
+
+    var linkG = mainG.append('g')
         .attr('class', 'links-group');
 
-    var nodeG = svg.append('g')
+    var nodeG = mainG.append('g')
         .attr('class', 'nodes-group');
 
     // Add g's for each leaf
@@ -82,7 +93,7 @@ d3.json('tree.json').then(function(dataset) {
         .enter()
         .append('g').attr('class', 'node')
         .attr('transform', function (d) {
-            return 'translate(' + d.x + ',' + ((height/max_level) * d.level + y_offset) + ')';
+            return 'translate(' + d.x + ',' + ((height/max_level) * d.level) + ') scale(' + scale + ')';
         }).on("click", function handleClick(d, i) {
             if (Date.now() - click_time < click_wait) {
                 return;
@@ -340,7 +351,7 @@ d3.json('tree.json').then(function(dataset) {
         .attr('class', 'link')
         .attr('stroke-width', 6)
         .attr('y1', function (d) {
-            return (height/max_level) * (d.level);
+            return (height/max_level) * d.level;
         })
         .attr('x1', function (d) {
             return d.x;
@@ -354,12 +365,11 @@ d3.json('tree.json').then(function(dataset) {
         })
         .attr('y2', function(d) {
             if (d.parent === null) {
-                return (height/max_level) * (d.level);
+                return (height/max_level) * d.level;
             }
             var par_d = dataset.filter(x => x["id"] === d.parent)[0];
-            return (height/max_level) * (par_d.level);
+            return (height/max_level) * par_d.level;
         })
-// end Promise.all then
 });
 
 function make_big(node, max_level) {
@@ -374,9 +384,11 @@ function make_big(node, max_level) {
 
     x = -270
     if (d.x + x <= 0) {
+        console.log("Touch wrong x");
         x = 5 - d.x
     }
     else if (d.x + x + 540 >= tree_width) {
+        console.log("Touch x");
         x = tree_width - 5 - 540 - d.x
     }
 
