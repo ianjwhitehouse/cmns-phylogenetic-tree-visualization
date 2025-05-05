@@ -1,7 +1,7 @@
 var svg = d3.select('svg');
 var svgNode = svg.node();
 
-var y_offset = 50;
+var y_offset = 120;
 var rect   = svgNode.getBoundingClientRect();
 var width  = rect.width;
 var height = rect.height - y_offset;
@@ -17,6 +17,39 @@ var click_wait = 1000;
 
 var desired_vert_space = 0.025;
 var scale = 1.0
+var tree_score = 36.22067745181044
+
+
+// Add main plot title, subtitle, and tree-score
+svg.append('text')
+    .attr('x', 20)
+    .attr('y', 80)
+    .attr('text-anchor', 'start')
+    .attr('font-size', '64px')
+    .attr('font-weight', 'bold')
+    .attr('class', 'node-title')
+    .text('Patient 150');
+
+svg.append('text')
+    .attr('x', 20)
+    .attr('y', 110)
+    .attr('text-anchor', 'start')
+    .attr('font-size', '24px')
+    .attr('class', 'node-title')
+    .text('Head and neck tumor phylogeny');
+
+svg.append('text')
+    .attr('x', 20)
+    .attr('y', 140)
+    .attr('text-anchor', 'start')
+    .attr('font-size', '18px')
+    .attr('class', 'node-title score-label')
+    .style('cursor', 'help')
+    .text('Tree score: ' + (Math.round(tree_score * 100) / 100))
+    .append('title')
+    .text('Represents negative log likelihood of tree portraying the data, the smaller value the better.');
+
+
 
 
 // Load tree.json and build chromosome annotations from mutation_names
