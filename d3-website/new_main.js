@@ -210,13 +210,13 @@ d3.json('tree.json').then(function(dataset) {
     var type_pie = post_expand.append('g').attr('class', 'sub-chart').attr('transform', 'translate(-180, 0)')
     type_pie.append('text').attr('font-size','16px') .attr('font-weight','bold').attr('text-anchor', 'middle')
         .attr("alignment-baseline", "text-after-edge").attr("dy", -70).attr('class', 'sub-chart-title').text("Tumour Types")
-    type_pie.append('g').attr('class', 'pie').selectAll('path').data(d => pie(countTypes([d.types, d.roles, d.gene_ids])))
+    type_pie.append('g').attr('class', 'pie').selectAll('path').data(d => pie(countTypes([d.types, d.roles, d.gene_symbols])))
         .enter().append('path').attr('d', arc).attr('class', 'pie-slice')
         .attr('fill', p => colorForType(p.data.type));
     type_pie.selectAll('path')
         .on('mouseover', function (event, d) {
             console.log(d)
-            show_tooltip("Type: " + d.data.type + ": " + d.data.count, event.target, 0, -45, scale);
+            show_pietooltip("Type: " + d.data.type + ";Count: " + d.data.count, event.target, 0, -45);
         }).on('mouseout', hide_tooltip);
 
     // Add quality chart
@@ -482,6 +482,47 @@ function show_tooltip(text, target, x, y, scale) {
         .attr("alignment-baseline", "middle").attr("dy", -37.5).attr("dx", 0).text(text)
 }
 
+function show_pietooltip(text, target, x, y) {
+    target = target.getScreenCTM();
+
+    const group = svg.append('g')
+        .attr('class', 'tool-tip');
+
+    const tooltip = group.append("text")
+        .style("font-size", "12px");
+
+    const lines = text.split(';');
+
+    tooltip.selectAll("tspan")
+        .data(lines)
+        .enter()
+        .append("tspan")
+        .attr("x", 0)
+        .attr("dy", (d, i) => i === 0 ? 0 : "1.2em")
+        .text(d => d);
+
+    // Get bounding box after text is rendered
+    const bbox = tooltip.node().getBBox();
+
+    // Add background rectangle behind the text
+    group.insert("rect", "text")
+        .attr("x", bbox.x - 4)
+        .attr("y", bbox.y - 2)
+        .attr("width", bbox.width + 8)
+        .attr("height", bbox.height + 4)
+        .attr("fill", "#f0f0f0")
+        .attr("stroke", "#ccc")
+        .attr("rx", 4)
+        .attr("ry", 4);
+
+    // Offset to center above cursor
+    const tooltipX = target.e + x - (bbox.width / 2);
+    const tooltipY = target.f + y - (bbox.height + 10); // 10px above cursor
+
+    group.attr("transform", `translate(${tooltipX}, ${tooltipY})`);
+}
+
+
 function hide_tooltip() {
     d3.selectAll('.tool-tip').remove();
 }
@@ -490,11 +531,8 @@ function countTypes(data) {
     arr1 = data[0];
     arr2 = data[1];
     arr3 = data[2];
-    combined = arr1.map((item, index) => `${item}; Role: ${arr2[index]}; Gene Id: ${arr3[index]}`);
-    console.log(Array.from(
-        d3.rollup(combined, v => v.length, t => t),
-        ([type, count]) => ({ type, count })
-    ));
+    console.log(data);
+    combined = arr1.map((item, index) => `${item};Role: ${arr2[index]};Gene: ${arr3[index]}`);
     return Array.from(
         d3.rollup(combined, v => v.length, t => t),
         ([type, count]) => ({ type, count })
