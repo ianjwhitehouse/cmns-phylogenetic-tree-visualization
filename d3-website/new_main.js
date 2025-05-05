@@ -55,6 +55,30 @@ var mainExpl = svg.append('g')
     .attr('transform', 'translate(20, 180)');
 
 // Add global explanatory text below headers
+
+if (tree_width/3 < 210){
+    extra_line_0 = 20;
+    extra_line_1 = 40;
+    extra_line_2 = 20;
+} else if (tree_width/3 < 230){
+    extra_line_0 = 0;
+    extra_line_1 = 40;
+    extra_line_2 = 20;
+} else if (tree_width/3 < 250){
+    extra_line_0 = 0;
+    extra_line_1 = 40;
+    extra_line_2 = 0;
+} else if (tree_width/3 < 290){
+    extra_line_0 = 0;
+    extra_line_1 = 20;
+    extra_line_2 = 0;
+} else {
+    extra_line_0 = 0;
+    extra_line_1 = 0;
+    extra_line_2 = 0;
+}
+console.log("Tree width" + tree_width/3)
+
 mainExpl.append('text')
     .attr('font-size', '17px')
     .attr('x', 0).attr('y', 0)
@@ -62,20 +86,20 @@ mainExpl.append('text')
 
 mainExpl.append('text')
     .attr('font-size', '17px')
-    .attr('x', 0).attr('y', 60)
+    .attr('x', 0).attr('y', 60 + extra_line_0)
     .text('1) % of Driver Mutations per tumor type: percentage of mutations gruped by tumor type; hover for types & roles.');
 
 mainExpl.append('text')
     .attr('font-size', '17px')
-    .attr('x', 0).attr('y', 120)
+    .attr('x', 0).attr('y', 120 + extra_line_0 + extra_line_1)
     .text('2) Allele Mutation Frequencies: histograms; greater spread indicates poorer clustering.');
 
 mainExpl.append('text')
     .attr('font-size', '17px')
-    .attr('x', 0).attr('y', 180)
+    .attr('x', 0).attr('y', 180 + extra_line_0 + extra_line_1 + extra_line_2)
     .text('3) Chromosome Distribution: mutation counts per chromosome; bold outlines mark driver mutations.');
 
-mainExpl.selectAll('text').call(wrap, 310)
+mainExpl.selectAll('text').call(wrap, tree_width/3)
 
 // Load tree.json and build chromosome annotations from mutation_names
 d3.json('tree.json').then(function(dataset) {
@@ -515,8 +539,10 @@ function show_tooltip(text, target, x, y, scale) {
 
     tool_tip = svg.append('g').attr('class', 'tool-tip').attr('transform', 'translate(' + (target.e + (x * scale)) + ', ' + (target.f + (y * scale)) + ')');
     tool_tip.append('rect').attr("x", -width/2).attr("width", width).attr("y", -50)
-        .attr("height", 25).attr("fill", tooltip_grey).attr('stroke-width', 3);
-    tool_tip.append('text').attr('font-size','12px') .attr('font-weight','bold').attr('text-anchor', 'middle')
+        .attr("height", 25).attr("fill", tooltip_grey).attr('stroke-width', 3).attr("stroke", "#ccc")
+        .attr("rx", 4)
+        .attr("ry", 4);;
+    tool_tip.append('text').attr('font-size','12px').attr('text-anchor', 'middle') // .attr('font-weight','bold')
         .attr("alignment-baseline", "middle").attr("dy", -37.5).attr("dx", 0).text(text)
 }
 
@@ -548,7 +574,7 @@ function show_pietooltip(text, target, x, y) {
         .attr("y", bbox.y - 2)
         .attr("width", bbox.width + 8)
         .attr("height", bbox.height + 4)
-        .attr("fill", "#f0f0f0")
+        .attr("fill", tooltip_grey)
         .attr("stroke", "#ccc")
         .attr("rx", 4)
         .attr("ry", 4);
