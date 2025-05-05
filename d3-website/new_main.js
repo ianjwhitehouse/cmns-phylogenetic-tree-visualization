@@ -61,18 +61,15 @@ d3.json('tree.json').then(function(dataset) {
         y_levels.push(((height/max_level) * l) + y_offset)
     });
     var x_pos = [];
-    var start = tree_width * .9; //need a better x pos
+    var start = tree_width * .8; //need a better x pos
     for (let i = 0; i < dataset[0].avg_obs_freq.length; i++){
         x_pos.push(start)
-        start = start + 100;
+        start = start + 150;
     }
-    createBalls(freqs, x_pos, y_levels, names, max_level)
-    //Anna: Done
+    createLegend(x_pos, height*0.5); //create the background legend
+    createBalls(freqs, x_pos, y_levels, names, max_level);
 
-    //Niko: append sample labels columns
-    for (let i = 0; i < x_pos.length; i++) {
-        svg.append('text').attr('font-size','12px').attr('font-weight','bold').attr('x', x_pos[i]).attr('y', 50).text('T'+i);
-    }
+    //Anna: Done
 
     //console.log(dataset);
     var mainG = svg.append('g').attr('class', 'tree')
@@ -256,7 +253,7 @@ d3.json('tree.json').then(function(dataset) {
         .attr('class', 'link')
         .attr('stroke-width', 6)
         .attr('y1', function (d) {
-            return ((height/max_level) * (d.level));
+            return (height/max_level) * d.level;
         })
         .attr('x1', function (d) {
             return d.x;
@@ -270,10 +267,10 @@ d3.json('tree.json').then(function(dataset) {
         })
         .attr('y2', function(d) {
             if (d.parent === null) {
-                return ((height/max_level) * (d.level));
+                return (height/max_level) * d.level;
             }
             var par_d = dataset.filter(x => x["id"] === d.parent)[0];
-            return ((height/max_level) * (par_d.level));
+            return (height/max_level) * par_d.level;
         })
 
     // Scale y
