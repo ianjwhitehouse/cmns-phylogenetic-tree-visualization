@@ -240,7 +240,7 @@ function createBalls(arr, x_pos, y_pos, cluster_names, max_levels){
             .attr('font-weight','bold')
             .attr('x', x_pos[i])
             .attr('y', text_locations[i][0][0][1])
-            .text('T'+i)
+            .text('T'+(i+1))
             .attr("text-anchor", "middle")
             .classed("sample-label", true);   
     }
