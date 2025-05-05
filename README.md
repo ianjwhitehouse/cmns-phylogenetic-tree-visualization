@@ -1,3 +1,6 @@
+Link to questions:
+https://docs.google.com/document/d/1kzlU2nK-GDpJ_F3gDXw8goy8r6yjY7rFlfEu0I8zAkI/edit?usp=sharing
+
 Instructions for hosting our website:
 1. Install a Web Browser on your laptop (Google Chrome recommended)
 2. Open a terminal that has Python installed.
