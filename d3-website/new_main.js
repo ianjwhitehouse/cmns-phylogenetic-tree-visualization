@@ -67,11 +67,12 @@ d3.json('tree.json').then(function(dataset) {
         y_levels.push(((height/max_level) * l) + y_offset)
     });
     var x_pos = [];
-    var start = tree_width * .8; //need a better x pos
+    var start = tree_width; // * .8; //need a better x pos
     for (let i = 0; i < dataset[0].avg_obs_freq.length; i++){
         x_pos.push(start)
         start = start + 150;
     }
+    console.log(x_pos)
     createLegend(x_pos, height*0.5); //create the background legend
     createBalls(freqs, x_pos, y_levels, names, max_level);
 
@@ -153,7 +154,7 @@ d3.json('tree.json').then(function(dataset) {
         prob_bars.append('rect').attr('class', 'bar').attr("x", [4, 48, 92, 136][i]).attr("width", 40)
             .attr('height', d => 35 * d.avg_obs_freq[i]).attr('y', d => -35 * d.avg_obs_freq[i]).attr("fill", accents[i])
             .on('mouseover', function (event, d) {
-                show_tooltip("T" + i + ": " + Math.round(d.avg_obs_freq[i] * 100) + "%", event.target, [4, 48, 92, 136][i] + 20, -15);
+                show_tooltip("T" + i + ": " + Math.round(d.avg_obs_freq[i] * 100) + "%", event.target, [4, 48, 92, 136][i] + 20, -15, scale);
             }).on('mouseout', hide_tooltip);
     }
     prob_bars.append('line').attr("x1", 0).attr("x2", 180).attr("y1", -35).attr("y2", -35).attr('stroke-width', 2);
@@ -182,7 +183,7 @@ d3.json('tree.json').then(function(dataset) {
     type_pie.selectAll('path')
         .on('mouseover', function (event, d) {
             console.log(d)
-            show_tooltip("Type: " + d.data.type + ": " + d.data.count, event.target, 0, -45);
+            show_tooltip("Type: " + d.data.type + ": " + d.data.count, event.target, 0, -45, scale);
         }).on('mouseout', hide_tooltip);
 
     // Add quality chart
@@ -209,17 +210,17 @@ d3.json('tree.json').then(function(dataset) {
                 d.allele_freq.max = d3.max(freqs, e => e.max);
                 d.allele_freq.min = d3.min(freqs, e => e.min);
 
-                scale = d3.scaleLinear().domain([d.allele_freq.min, d.allele_freq.max]).range([0, 1]);
-                [min, max] = scale.domain();
+                allele_scale = d3.scaleLinear().domain([d.allele_freq.min, d.allele_freq.max]).range([0, 1]);
+                [min, max] = allele_scale.domain();
                 step = (max - min) / 15;
-                hist = d3.histogram().value(e => e).domain(scale.domain()).thresholds(d3.range(min, max, step));
+                hist = d3.histogram().value(e => e).domain(allele_scale.domain()).thresholds(d3.range(min, max, step));
 
                 bins = hist(d.allele_freq[i]);
                 bins.forEach(function (e) {
                     max = d3.max(bins, f => f.length);
                     e.size = e.length / max;
-                    e.scaled_x0 = scale(e.x0);
-                    e.scaled_x1 = scale(e.x1);
+                    e.scaled_x0 = allele_scale(e.x0);
+                    e.scaled_x1 = allele_scale(e.x1);
                 })
                 return bins
             })
@@ -229,7 +230,7 @@ d3.json('tree.json').then(function(dataset) {
             .attr("height", d => 120 * (d.scaled_x1 - d.scaled_x0)).attr("fill", accents[i])
             .attr("stroke", accents[i])
             .on('mouseover', function (event, d) {
-                show_tooltip(Math.round(d.x0 * 100) + "%-" + Math.round(d.x1 * 100) + "%: " + d.length, event.target, 0, -120 * d.scaled_x1 + 20);
+                show_tooltip(Math.round(d.x0 * 100) + "%-" + Math.round(d.x1 * 100) + "%: " + d.length, event.target, 0, -120 * d.scaled_x1 + 20, scale);
             }).on('mouseout', hide_tooltip);
     }
     hists.append('line').attr("x1", -60).attr("y1", 1).attr("x2", 60).attr("y2", 1).attr('stroke-width', 2).attr('stroke', 'black');
@@ -327,7 +328,7 @@ d3.json('tree.json').then(function(dataset) {
               )).join(', ');
               show_tooltip(
                   `Chr ${c.chrom}: ${c.count}` + (genes ? ` (${genes})` : ''),
-                  event.target, 0, -10
+                  event.target, xScale(c.chrom), -10, scale
               );
           })
           .on('mouseout', hide_tooltip);
@@ -427,11 +428,11 @@ function make_small(node, max_level) {
     title.transition().attr('dy', -35).attr('font-size', '16px')
 }
 
-function show_tooltip(text, target, x, y) {
+function show_tooltip(text, target, x, y, scale) {
     target = target.getScreenCTM();
     width = 7 * text.length;
 
-    tool_tip = svg.append('g').attr('class', 'tool-tip').attr('transform', 'translate(' + (target.e + x) + ', ' + (target.f + y) + ')');
+    tool_tip = svg.append('g').attr('class', 'tool-tip').attr('transform', 'translate(' + (target.e + (x * scale)) + ', ' + (target.f + (y * scale)) + ')');
     tool_tip.append('rect').attr("x", -width/2).attr("width", width).attr("y", -50)
         .attr("height", 25).attr("fill", tooltip_grey).attr('stroke-width', 3);
     tool_tip.append('text').attr('font-size','12px') .attr('font-weight','bold').attr('text-anchor', 'middle')
