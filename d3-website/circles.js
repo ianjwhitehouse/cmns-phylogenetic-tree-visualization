@@ -17,16 +17,106 @@ var prev_level = 0;
 var text_labels_left = [];
 var text_locations = [];
 var text_labels_right = [];
+var prev_dir = "left";
 
-function createBalls(arr, x_pos, y_pos, cluster_names, max_levels){
-    // arr.forEach(element => {
-    //     sum = 0;
-    //     element.forEach(function(i) {
-    //         sum += i;
-    //     });
-    //     percentages.push(sum / element.length);
-    // });
+function createLegend(x_pos, y){
+    console.log(x_pos)
+    console.log(Array.isArray(x_pos));
+    const sum = x_pos.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+    const x = sum / x_pos.length;
+    //const x = x_pos => x_pos.reduce((sum, val) => sum + val, 0) / x_pos.length;
+    const r = 15;
+    //start with random locations
+    var data = Array.from({ length: 100}, (_, index) => ({
+        x: Math.random() * x - (index * 15),
+        y: Math.random() * y - (index * 15),
+        r: r
+    }));
+    //use force simulation to make a circle
+    sim = d3.forceSimulation(data)
+        .force("x", d3.forceX(x)) 
+        .force("y", d3.forceY(y))
+        .force("collide", d3.forceCollide(radius+20).iterations(2))
+        // ... chain together as many forces as we want
+        .stop()
+        .tick(35);
+        
+    // Sort by y-coordinate
+    data.sort((a, b) => a.y - b.y);
+
+    //add text locations
+    var highest = data[0].y;
+    var lowest = data[data.length - 1].y;
+    var legend_labels_loc = []
+    legend_labels_loc.push([x, highest - 20])
+    legend_labels_loc.push([x, lowest + 50])
+        
+    // Add id and color attributes
+    data = data.map((ball, index) => ({
+        ...ball,
+        color: Boolean(index <= (100 * (1 - 0.8)))
+    }));
+    const opacity = 0.25
+    class_name = "legend"
+    var circles = d3.select("svg").selectAll("circle")
+        .filter("." + class_name)
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr('cx', function(d){
+            return d.x;
+        })
+        .attr('cy', function(d){
+            return d.y;
+        })
+        .attr("r", r)
+        .attr("fill", function(d){
+            if (d.color){
+                return "dimgray";
+            }
+            else {
+                return "gainsboro";
+            }
+        })
+        .attr('opacity', opacity)
+        .classed(class_name, true);
+    //text labels
+    // svg.append('text')
+    //     .attr('font-size','24px')
+    //     .attr('font-weight','bold')
+    //     .attr('x', legend_labels_loc[0][0])
+    //     .attr('y', legend_labels_loc[0][1] - 30)
+    //     .text('Observed Frequency:')
+    //     .attr("text-anchor", "middle")
+    //     .attr('fill', 'black')
+    //     .attr('opacity', opacity-0.05)
+    //     .classed("legend", true); 
+    svg.append('text')
+        .attr('font-size','24px')
+        .attr('font-weight','bold')
+        .attr('x', legend_labels_loc[0][0])
+        .attr('y', legend_labels_loc[0][1])
+        .text('% Without New Mutation')
+        .attr("text-anchor", "middle")
+        .attr('fill', 'black')
+        .attr('opacity', opacity-0.05)
+        .classed("legend", true); 
+    svg.append('text')
+        .attr('font-size','24px')
+        .attr('font-weight','bold')
+        .attr('x', legend_labels_loc[1][0])
+        .attr('y', legend_labels_loc[1][1])
+        .text('% With New Mutation')
+        .attr("text-anchor", "middle")
+        .attr('fill', 'grey')
+        .attr('opacity', opacity)
+        .classed("legend", true);
     
+}
+
+
+//Initialize balls
+function createBalls(arr, x_pos, y_pos, cluster_names, max_levels){    
     //get percentages
     console.log(arr)
     var p_left = [];
@@ -39,7 +129,7 @@ function createBalls(arr, x_pos, y_pos, cluster_names, max_levels){
             }
             if (p_left.length == max_levels-1){
                 if (p_right.length == 0){
-                    p_right = p_left.slice(0,max_levels-1-2); //this is kinda cheating cause I know there's a difference of 2
+                    p_right = p_left.slice(0,max_levels-1-2); //kinda cheating cause I know there's a difference of 2
                 }
                 p_right.push(p);
             }
@@ -52,10 +142,6 @@ function createBalls(arr, x_pos, y_pos, cluster_names, max_levels){
         p_left = [];
         p_right = []
     }
-
-    // percentages_left[0].forEach(element => {
-    //     colors.push(['#fc4f30', '#17becf']);
-    // });
     
     //make text labels
     var text_labels_l = [];
@@ -65,7 +151,7 @@ function createBalls(arr, x_pos, y_pos, cluster_names, max_levels){
         for (let i = 0; i < cluster_names.length; i++){
             if (percentages_left[x][i] == 1){
                 curr_string = curr_string;
-                text_labels_l.push(['No new mutations', curr_string]);
+                text_labels_l.push([curr_string, '']);
             }
             else if (i === 0){
                 text_labels_l.push(["No mutations", cluster_names[i].toString()]);
@@ -141,6 +227,26 @@ function createBalls(arr, x_pos, y_pos, cluster_names, max_levels){
         text_locations.push(text_l);
         text_l = [];
     }
+    console.log(text_locations)
+
+    //create sample labels
+    var min_y = 1000000000;
+    for (let i = 0; i < x_pos.length; i++) {
+        if (text_locations[i][0][0][1] < min_y){
+            min_y = text_locations[i][0][0][1]
+        }
+        svg.append('text')
+            .attr('font-size','15px')
+            .attr('font-weight','bold')
+            .attr('x', x_pos[i])
+            .attr('y', text_locations[i][0][0][1])
+            .text('T'+i)
+            .attr("text-anchor", "middle")
+            .classed("sample-label", true);   
+    }
+    d3.select("svg")
+        .selectAll("text.sample-label")
+        .attr('y', min_y - 10)
 
     //Make balls (create location array for each level) for right side of tree
     locations = [];
@@ -233,7 +339,7 @@ function createBalls(arr, x_pos, y_pos, cluster_names, max_levels){
                 .attr("x", d => d.x)
                 .attr("y", d => d.y)
                 .text(d => d.label)
-                .attr("font-size", "14px")
+                .attr("font-size", "18px")
                 .attr("fill", d => d.color)
                 .classed(class_name, true);
         }
@@ -259,7 +365,7 @@ function createBalls(arr, x_pos, y_pos, cluster_names, max_levels){
                 .attr("x", d => d.x)
                 .attr("y", d => d.y)
                 .text(d => d.label)
-                .attr("font-size", "14px")
+                .attr("font-size", "18px")
                 .attr("fill", d => d.color)
                 .attr("text-anchor", "middle")
                 .classed(class_name, true);
@@ -290,7 +396,7 @@ function transitionCircles(level, id){
         var locations = perm_locations_right;
         var dir = 'right'
     }
-    if (level == prev_level){
+    if (level == prev_level && prev_dir === dir){
         return;
     }
     //first, remove the labels
@@ -303,7 +409,7 @@ function transitionCircles(level, id){
     for (let x = 0; x < percentages_left.length; x++){
         class_name = "circle" + x.toString()
         //Move the balls to new positions
-        if (level > prev_level){
+        if (level >= prev_level){
             //Moving down the tree
             newData = locations[x][level];
             //remove the extra dots
@@ -313,7 +419,8 @@ function transitionCircles(level, id){
                 .filter(function (d, i) {return i <= index-1;})
                 .transition().duration(900)
                 .ease(d3.easePoly.exponent(2))
-                .attr('fill', background);
+                .attr('fill', background)
+                .attr("opacity", 0);
             //move the remaining dots
             d3.select("svg").selectAll("circle")
                 .filter("." + class_name)
@@ -344,7 +451,8 @@ function transitionCircles(level, id){
                     else {
                         return colors[x][1]
                     }
-                });
+                })
+                .attr('opacity', 1);
         }
         if (level < prev_level){
             //Moving up the tree
@@ -378,7 +486,8 @@ function transitionCircles(level, id){
                     else {
                         return colors[x][1]
                     }
-                });
+                })
+                .attr('opacity', 1);
         }
     
     }
@@ -393,5 +502,38 @@ function transitionCircles(level, id){
             .attr("opacity", 1)
             .attr('font-weight','bold');
     }
+
+    //move the sample labels
+    var min_y = 1000000000;
+    var max_y = 0;
+    for (let i = 0; i < percentages_left.length; i++) {
+        //i = sample
+        if (text_locations[i][level][0][1] < min_y){
+            min_y = text_locations[i][level][0][1]
+        }
+        if (text_locations[i][level][0][1] > max_y){
+            max_y = text_locations[i][level][1][1]
+        }
+    }
+    if (level === 0){min_y = min_y - 10}
+    else{min_y = min_y - 20}
+    d3.select("svg")
+        .selectAll("text.sample-label")
+        .transition().delay(1600).duration(1200)
+        .attr('y', function(d){
+            const y = this.getAttribute("y");
+            if (y > min_y){
+                return max_y + 20;
+            }
+            else if (y <= min_y){
+                return min_y - 20;
+            }
+        });
+        // .each(function() {
+        //     this.parentNode.appendChild(this);
+        //   });;
+
+    //reset
     prev_level = level;
+    prev_dir = dir;
 }
