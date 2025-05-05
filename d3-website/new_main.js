@@ -49,8 +49,33 @@ svg.append('text')
     .append('title')
     .text('Represents negative log likelihood of tree portraying the data, the smaller value the better.');
 
+// Add global explanatory text below headers
+var mainExpl = svg.append('g')
+    .attr('class', 'main-explanation')
+    .attr('transform', 'translate(20, 180)');
 
+// Add global explanatory text below headers
+mainExpl.append('text')
+    .attr('font-size', '17px')
+    .attr('x', 0).attr('y', 0)
+    .text('Each node represents a mutation cluster in tumor development; click a node to explore details.');
 
+mainExpl.append('text')
+    .attr('font-size', '17px')
+    .attr('x', 0).attr('y', 60)
+    .text('1) % of Driver Mutations per tumor type: percentage of mutations gruped by tumor type; hover for types & roles.');
+
+mainExpl.append('text')
+    .attr('font-size', '17px')
+    .attr('x', 0).attr('y', 120)
+    .text('2) Allele Mutation Frequencies: histograms; greater spread indicates poorer clustering.');
+
+mainExpl.append('text')
+    .attr('font-size', '17px')
+    .attr('x', 0).attr('y', 180)
+    .text('3) Chromosome Distribution: mutation counts per chromosome; bold outlines mark driver mutations.');
+
+mainExpl.selectAll('text').call(wrap, 310)
 
 // Load tree.json and build chromosome annotations from mutation_names
 d3.json('tree.json').then(function(dataset) {
@@ -128,20 +153,22 @@ d3.json('tree.json').then(function(dataset) {
         .append('g').attr('class', 'node')
         .attr('transform', function (d) {
             return 'translate(' + d.x + ',' + ((height/max_level) * d.level) + ') scale(' + scale + ')';
-        }).on("click", function handleClick(d, i) {
+        })
+        .on("click", function(event, d) {
+            event.stopPropagation();
             if (Date.now() - click_time < click_wait) {
                 return;
             } else {
                 click_time = Date.now();
             }
 
-            _ = transitionCircles(i.level-1, i.id-1) //Anna: added to move the circles
+            transitionCircles(d.level-1, d.id-1); //Anna: added to move the circles
             var clicked_node = this
             clicked_node.parentNode.appendChild(clicked_node);
             rect = d3.select(clicked_node).select('rect');
 
             if (rect.attr("width") < 225) {
-                nodeG.selectAll('.node').each(function(d) {
+                nodeG.selectAll('.node').each(function(nd) {
                     if (this === clicked_node) {
                         return;
                     }
@@ -153,6 +180,16 @@ d3.json('tree.json').then(function(dataset) {
                 make_small(d3.select(this), max_level);
             }
         });
+    // Collapse any expanded cluster when clicking outside of a node
+    svg.on('click', function(event) {
+      nodeG.selectAll('.node').each(function(d) {
+        var n = d3.select(this);
+        var rect = n.select('rect');
+        if (+rect.attr('width') > 220) {
+          make_small(n, max_level);
+        }
+      });
+    });
 
     // Add rects for each g for each leaf
     nodeEnter.append('rect')
@@ -180,9 +217,9 @@ d3.json('tree.json').then(function(dataset) {
 
     // Add bar chart of probs to pre expand visualization
     var prob_bars = pre_expand.append('g').attr('class', 'sub-chart').attr('transform', 'translate(-90, 40)').attr('fill', '#bbbbbb').attr('stroke', 'black');
-    prob_bars.append('text').attr('font-size','14px') .attr('font-weight','bold').attr('text-anchor', 'middle')
-        .attr('dy', '-35').attr('dx', '90').attr('stroke', 'None')
-        .attr("alignment-baseline", "text-after-edge").attr('class', 'sub-chart-title').text("Observed Frequency");
+prob_bars.append('text').attr('font-size','14px') .attr('font-weight','bold').attr('text-anchor', 'middle')
+    .attr('dy', '-35').attr('dx', '90').attr('stroke', 'None')
+    .attr("alignment-baseline", "text-after-edge").attr('class', 'sub-chart-title').text("Observed Frequency   ");
     for (let i = 0; i < 4; i++) {
         prob_bars.append('rect').attr('class', 'bar').attr("x", [4, 48, 92, 136][i]).attr("width", 40)
             .attr('height', d => 35 * d.avg_obs_freq[i]).attr('y', d => -35 * d.avg_obs_freq[i]).attr("fill", accents[i])
@@ -209,8 +246,9 @@ d3.json('tree.json').then(function(dataset) {
     // Add pie chart of types to post-expand visualizations
     var type_pie = post_expand.append('g').attr('class', 'sub-chart').attr('transform', 'translate(-180, 0)')
     type_pie.append('text').attr('font-size','16px') .attr('font-weight','bold').attr('text-anchor', 'middle')
-        .attr("alignment-baseline", "text-after-edge").attr("dy", -70).attr('class', 'sub-chart-title').text("Tumour Types")
-    type_pie.append('g').attr('class', 'pie').selectAll('path').data(d => pie(countTypes([d.types, d.roles, d.gene_symbols])))
+        .attr("alignment-baseline", "text-after-edge").attr("dy", -70).attr('class', 'sub-chart-title').text("% Driver Mut.")
+    type_pie.append('g').attr('class', 'pie').selectAll('path').data(d => pie(countTypes([d.types, d.roles, d.gene_ids])))
+
         .enter().append('path').attr('d', arc).attr('class', 'pie-slice')
         .attr('fill', p => colorForType(p.data.type));
     type_pie.selectAll('path')
@@ -537,6 +575,38 @@ function countTypes(data) {
         d3.rollup(combined, v => v.length, t => t),
         ([type, count]) => ({ type, count })
     );
+}
+
+// Wrap explanatory text to a max width
+function wrap(text, width) {
+  text.each(function() {
+    var textEl = d3.select(this),
+        words = textEl.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 0,
+        lineHeight = 1.1, // ems
+        x = textEl.attr('x'),
+        y = textEl.attr('y'),
+        tspan = textEl.text(null)
+                      .append('tspan')
+                      .attr('x', x)
+                      .attr('y', y);
+
+    while (word = words.pop()) {
+      line.push(word);
+      tspan.text(line.join(' '));
+      if (tspan.node().getComputedTextLength() > width) {
+        line.pop();
+        tspan.text(line.join(' '));
+        line = [word];
+        tspan = textEl.append('tspan')
+                      .attr('x', x)
+                      .attr('dy', lineHeight + 'em')
+                      .text(word);
+      }
+    }
+  });
 }
 
 // Add button and overlay for tumor samples origin image
